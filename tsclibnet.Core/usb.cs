@@ -1202,8 +1202,12 @@ namespace TSCSDK
         {
             byte[] numArray = new byte[256];
             this.sendcommand("OUT GETSETTING$(\"" + app + "\",\"" + sec + "\",\"" + key + "\")");
-            usb.ReadToStream(usb.HidHandle1);
-            return Encoding.ASCII.GetString(usb.readbuffer);
+            usb.ReadToStream(usb.HidHandle);
+            var rawText = Encoding.ASCII.GetString(usb.readbuffer);
+            if (rawText.Contains("\r\n"))
+                return rawText.Substring(0, rawText.IndexOf("\r\n"));
+            else
+                return string.Empty;
         }
 
         public string printersetting_mult(int portnumber, string app, string sec, string key)

@@ -1,12 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Version>1.0.0</Version>
+		<Version>1.0.1</Version>
 		<Authors>hyunmui</Authors>
 		<Product>TSC Printer DotNet SDK</Product>
 		<Description>TSC 프린터 연동용 닷넷 SDK</Description>
 		<PackageTags>TSC TTP-247 TSCL TSCL2</PackageTags>
 		<ProjectUrl>https://github.com/hyunmui/Hyunmui.TSCPrinter</ProjectUrl>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 
 		<TargetFramework>netstandard2.0</TargetFramework>
 		<PlatformTarget>AnyCPU</PlatformTarget>
@@ -16,4 +17,7 @@
 		<ProjectReference Include="..\tsclibnet.Core\tsclibnet.Core.csproj" />
 	</ItemGroup>
 
+	<ItemGroup>
+		<None Include="README.md" Pack="true" PackagePath="\"/>
+	</ItemGroup>
 </Project>

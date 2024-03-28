@@ -3,18 +3,26 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
 
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Authors>hyunmui</Authors>
-    <Product>TSC Library</Product>
+    <Product>TSC NET Library</Product>
     <Description>tsclibnet.dll 디컴파일 버전</Description>
     <PackageTags>TSC TSCL TSCL2 Printer</PackageTags>
     <ProjectUrl>https://github.com/hyunmui/Hyunmui.TSCPrinter</ProjectUrl>
+    <Repository>https://github.com/hyunmui/Hyunmui.TSCPrinter</Repository>
+    <Copyright>Copyright (c) 2001 eSangNetworks</Copyright>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="8.0.3" />
     <PackageReference Include="System.IO.Ports" Version="8.0.0" />
     <PackageReference Include="System.Management" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>
