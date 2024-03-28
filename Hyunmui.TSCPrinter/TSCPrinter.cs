@@ -31,7 +31,7 @@ namespace Hyunmui.TSCPrinter
                 throw new TscException("프린터 포트를 열 수 없습니다.");
 
             Setup(options);
-            Device.sendpicture(MillimeterToDot(options.ReferenceMillimeterX), MillimeterToDot(options.ReferenceMillimeterY), bitmap);
+            Device.sendpicture(options.ReferenceMillimeterX.ToDots(Dpi), options.ReferenceMillimeterY.ToDots(Dpi), bitmap);
             Device.printlabel(options.PrintCount.ToString(), options.CopyCount.ToString());
             Device.closeport();
         }
@@ -75,11 +75,6 @@ namespace Hyunmui.TSCPrinter
 
             // 버퍼 초기화
             Device.clearbuffer();
-        }
-
-        public int MillimeterToDot(decimal mm)
-        {
-            return (int)(mm * Dpi / 25.4m);
         }
 
         private int _dpi;

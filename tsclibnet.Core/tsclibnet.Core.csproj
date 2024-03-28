@@ -2,6 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+
+    <Version>1.0.1</Version>
+    <Authors>hyunmui</Authors>
+    <Product>TSC Library</Product>
+    <Description>tsclibnet.dll 디컴파일 버전</Description>
+    <PackageTags>TSC TSCL TSCL2 Printer</PackageTags>
+    <ProjectUrl>https://github.com/hyunmui/Hyunmui.TSCPrinter</ProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
