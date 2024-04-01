@@ -45,7 +45,7 @@ namespace Hyunmui.TSCPrinter
                 options.Density.ToString(),
                 ((int)options.SensorType).ToString(),
                 options.GapBlackLineHeight.ToString(),
-                options.GapBlackLineSubHeight.ToString());
+                options.GapBlackLineOffset.ToString());
 
             // 방향
             switch (options.PrintDirection)
