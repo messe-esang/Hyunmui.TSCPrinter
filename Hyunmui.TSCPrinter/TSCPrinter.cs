@@ -31,7 +31,7 @@ namespace Hyunmui.TSCPrinter
                 throw new TscException("프린터 포트를 열 수 없습니다.");
 
             Setup(options);
-            Device.sendpicture(options.ReferenceMillimeterX.ToDots(Dpi), options.ReferenceMillimeterY.ToDots(Dpi), bitmap);
+            Device.sendpicture(0, 0, bitmap);
             Device.printlabel(options.PrintCount.ToString(), options.CopyCount.ToString());
             Device.closeport();
         }
@@ -41,7 +41,7 @@ namespace Hyunmui.TSCPrinter
             // 기본 설정
             Device.setup(options.LabelWidthMillimeter.ToString(),
                 options.LabelHeightMillimeter.ToString(),
-                options.SpeedInchPerSec.ToString(),
+                options.Speed.ToString(),
                 options.Density.ToString(),
                 ((int)options.SensorType).ToString(),
                 options.GapBlackLineHeight.ToString(),

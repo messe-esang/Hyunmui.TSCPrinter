@@ -31,7 +31,14 @@ namespace Hyunmui.TSCPrinter.Tests
                 Offset = -1.5M,
             };
             Printer.Device.openport();
-            Printer.Device.setup(options.LabelWidthMillimeter.ToString(), options.LabelHeightMillimeter.ToString(), options.SpeedInchPerSec.ToString(), options.Density.ToString(), ((int)options.SensorType).ToString(), options.GapBlackLineHeight.ToString(), options.GapBlackLineOffset.ToString());
+            Printer.Device.setup(
+                options.LabelWidthMillimeter.ToString(),
+                options.LabelHeightMillimeter.ToString(),
+                options.Speed.ToString(),
+                options.Density.ToString(),
+                ((int)options.SensorType).ToString(),
+                options.GapBlackLineHeight.ToString(),
+                options.GapBlackLineOffset.ToString());
             var dpi = Printer.Device.printersetting("SYSTEM", "INFORMATION", "DPI");
             console.WriteLine("DPI=" + dpi);
             Printer.Device.closeport();
@@ -46,8 +53,6 @@ namespace Hyunmui.TSCPrinter.Tests
                 LabelWidthMillimeter = 80,
                 LabelHeightMillimeter = 60,
                 Offset = -1.5M,
-                ReferenceMillimeterX = 5,
-                ReferenceMillimeterY = 5,
             });
         }
     }
