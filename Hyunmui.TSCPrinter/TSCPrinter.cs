@@ -77,6 +77,24 @@ namespace Hyunmui.TSCPrinter
             Device.clearbuffer();
         }
 
+        public void FormFeed(TSCPrinterSetupOptions options)
+        {
+            if (!Device.openport())
+                throw new TscException("프린터 포트를 열 수 없습니다.");
+
+            // 기본 설정
+            Device.setup(options.LabelWidthMillimeter.ToString(),
+                options.LabelHeightMillimeter.ToString(),
+                "7",
+                options.Density.ToString(),
+                ((int)options.SensorType).ToString(),
+                options.GapBlackLineHeight.ToString(),
+                options.GapBlackLineOffset.ToString());
+
+            Device.formfeed();
+            Device.closeport();
+        }
+
         private int _dpi;
         public int Dpi
         {

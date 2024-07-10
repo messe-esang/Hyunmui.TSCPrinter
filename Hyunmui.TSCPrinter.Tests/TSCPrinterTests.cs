@@ -55,5 +55,36 @@ namespace Hyunmui.TSCPrinter.Tests
                 Offset = -1.5M,
             });
         }
+
+        [Fact]
+        public void 프린터설정테스트()
+        {
+            Printer.Device.openport();
+            Printer.Device.sendcommand("SET ENCODER ON");
+            Printer.Device.closeport();
+        }
+
+        [Fact]
+        public void 프린터폼피드_일반()
+        {
+            Printer.FormFeed(new TSCPrinterSetupOptions
+            {
+                LabelWidthMillimeter = 80,
+                LabelHeightMillimeter = 60,
+                Offset = -1.5M,
+            });
+        }
+
+        [Fact]
+        public void 프린터폼피드_띠지()
+        {
+            Printer.FormFeed(new TSCPrinterSetupOptions
+            {
+                LabelWidthMillimeter = 25,
+                LabelHeightMillimeter = 250,
+                SensorType = SensorType.BlackLine,
+                GapBlackLineHeight = 3,
+            });
+        }
     }
 }
