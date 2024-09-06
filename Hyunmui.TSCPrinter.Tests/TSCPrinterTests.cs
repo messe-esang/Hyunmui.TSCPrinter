@@ -84,7 +84,16 @@ namespace Hyunmui.TSCPrinter.Tests
                 LabelHeightMillimeter = 250,
                 SensorType = SensorType.BlackLine,
                 GapBlackLineHeight = 3,
+                UseCutter = true,
             });
+        }
+
+        [Fact]
+        public void 프린터_피드_테스트()
+        {
+            Printer.Device.openport();
+            Printer.Device.sendcommand("SET ENCODER ON");
+            Printer.Device.closeport();
         }
     }
 }

@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyunmui.TSCPrinter", "Hyunm
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Hyunmui.TSCPrinter.Tests", "Hyunmui.TSCPrinter.Tests\Hyunmui.TSCPrinter.Tests.csproj", "{0AF4736B-F96C-45F0-9B55-3771FA81DBCF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tsclibnet.Core", "tsclibnet.Core\tsclibnet.Core.csproj", "{81D28DA0-F163-4B6C-9256-1D22936BC65E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "tsclibnet.Core", "tsclibnet.Core\tsclibnet.Core.csproj", "{81D28DA0-F163-4B6C-9256-1D22936BC65E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

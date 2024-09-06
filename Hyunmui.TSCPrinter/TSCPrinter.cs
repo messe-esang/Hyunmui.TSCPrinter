@@ -68,10 +68,10 @@ namespace Hyunmui.TSCPrinter
             Device.sendcommand($"SET CUTTER {(options.UseCutter ? "ON" : "OFF")}");
 
             // Offset
-            if (options.Offset != default)
-            {
-                Device.sendcommand($"OFFSET {options.Offset} mm");
-            }
+            Device.sendcommand($"OFFSET {options.Offset} mm");
+
+            // Ribbon on
+            Device.sendcommand("SET RIBBON ON");
 
             // 버퍼 초기화
             Device.clearbuffer();
@@ -91,7 +91,15 @@ namespace Hyunmui.TSCPrinter
                 options.GapBlackLineHeight.ToString(),
                 options.GapBlackLineOffset.ToString());
 
+            // Ribbon on
+            Device.sendcommand("SET RIBBON ON");
+
             Device.formfeed();
+            Device.sendcommand("CUT");
+
+            Device.clearbuffer();
+            Device.sendcommand("FEED 80");
+
             Device.closeport();
         }
 
