@@ -15,16 +15,6 @@ namespace Hyunmui.TSCPrinter
             Device = device;
         }
 
-        public void Print(Bitmap bitmap)
-        {
-            Print(bitmap, new TSCPrinterSetupOptions
-            {
-                LabelWidthMillimeter = 80,
-                LabelHeightMillimeter = 60,
-                Offset = -1.5M,
-            });
-        }
-
         public void Print(Bitmap bitmap, TSCPrinterSetupOptions options)
         {
             if (!Device.openport())
@@ -72,6 +62,9 @@ namespace Hyunmui.TSCPrinter
 
             // Ribbon on
             Device.sendcommand("SET RIBBON ON");
+
+            // Reference X/Y
+            Device.sendcommand($"REFERENCE {options.ReferenceX.ToDots(Dpi)},{options.ReferenceY.ToDots(Dpi)}");
 
             // 버퍼 초기화
             Device.clearbuffer();
