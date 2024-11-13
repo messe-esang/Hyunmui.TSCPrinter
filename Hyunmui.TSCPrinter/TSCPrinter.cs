@@ -88,7 +88,6 @@ namespace Hyunmui.TSCPrinter
             Device.sendcommand("SET RIBBON ON");
 
             Device.formfeed();
-            Device.sendcommand("CUT");
 
             Device.clearbuffer();
             Device.sendcommand("FEED 80");
