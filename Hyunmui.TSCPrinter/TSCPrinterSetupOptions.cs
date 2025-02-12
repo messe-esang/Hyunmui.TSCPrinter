@@ -26,6 +26,7 @@ namespace Hyunmui.TSCPrinter
         public decimal Offset { get; set; }
         public PrintDirection PrintDirection { get; set; } = PrintDirection.Normal;
         public bool UseCutter { get; set; } = true;
+        public bool UseRibbon { get; set; } = true;
         public int ReferenceX { get; set; }
         public int ReferenceY { get; set; }
         public int PrintCount { get; set; } = 1;

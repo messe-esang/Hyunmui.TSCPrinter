@@ -85,6 +85,7 @@ namespace Hyunmui.TSCPrinter.Tests
                 SensorType = SensorType.BlackLine,
                 GapBlackLineHeight = 3,
                 UseCutter = true,
+                UseRibbon = false,
             });
         }
 

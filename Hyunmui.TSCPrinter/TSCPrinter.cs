@@ -61,7 +61,7 @@ namespace Hyunmui.TSCPrinter
             Device.sendcommand($"OFFSET {options.Offset} mm");
 
             // Ribbon on
-            Device.sendcommand("SET RIBBON ON");
+            Device.sendcommand($"SET RIBBON {(options.UseRibbon ? "ON" : "OFF")}");
 
             // Reference X/Y
             Device.sendcommand($"REFERENCE {options.ReferenceX.ToDots(Dpi)},{options.ReferenceY.ToDots(Dpi)}");
@@ -85,10 +85,9 @@ namespace Hyunmui.TSCPrinter
                 options.GapBlackLineOffset.ToString());
 
             // Ribbon on
-            Device.sendcommand("SET RIBBON ON");
+            Device.sendcommand($"SET RIBBON {(options.UseRibbon ? "ON" : "OFF")}");
 
             Device.formfeed();
-            Device.sendcommand("CUT");
 
             Device.clearbuffer();
             Device.sendcommand("FEED 80");
