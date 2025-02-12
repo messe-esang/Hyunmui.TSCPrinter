@@ -84,13 +84,16 @@ namespace Hyunmui.TSCPrinter
                 options.GapBlackLineHeight.ToString(),
                 options.GapBlackLineOffset.ToString());
 
+            // 커터
+            Device.sendcommand($"SET CUTTER {(options.UseCutter ? "ON" : "OFF")}");
+
             // Ribbon on
             Device.sendcommand($"SET RIBBON {(options.UseRibbon ? "ON" : "OFF")}");
 
             Device.formfeed();
+            Device.sendcommand("FEED 80");
 
             Device.clearbuffer();
-            Device.sendcommand("FEED 80");
 
             Device.closeport();
         }
