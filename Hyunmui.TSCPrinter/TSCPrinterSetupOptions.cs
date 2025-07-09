@@ -31,5 +31,9 @@ namespace Hyunmui.TSCPrinter
         public int ReferenceY { get; set; }
         public int PrintCount { get; set; } = 1;
         public int CopyCount { get; set; } = 1;
+        /// <summary>
+        /// 라벨과 이미지 비율이 다를 경우 자동 회전 여부
+        /// </summary>
+        public bool AutoRotation { get; set; } = false;
     }
 }

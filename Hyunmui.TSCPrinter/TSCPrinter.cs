@@ -20,14 +20,43 @@ namespace Hyunmui.TSCPrinter
             if (!Device.openport())
                 throw new TscException("프린터 포트를 열 수 없습니다.");
 
+            // Auto rotation 기능 적용
+            if (options.AutoRotation)
+            {
+                var labelRatio = (float)options.LabelWidthMillimeter / options.LabelHeightMillimeter;
+                var imageRatio = (float)bitmap.Width / bitmap.Height;
+
+                bool isRatioMismatch =
+                    (labelRatio >= 1 && imageRatio < 1) ||
+                    (labelRatio < 1 && imageRatio >= 1);
+
+                if (isRatioMismatch)
+                {
+                    switch (options.PrintDirection)
+                    {
+                        case PrintDirection.NormalMirror:
+                        case PrintDirection.ReverseMirror:
+                            bitmap.RotateFlip(RotateFlipType.Rotate270FlipNone);
+                            break;
+                        default:
+                            bitmap.RotateFlip(RotateFlipType.Rotate90FlipNone);
+                            break;
+                    }
+                }
+            }
+
             Setup(options);
             Device.sendpicture(0, 0, bitmap);
             Device.printlabel(options.PrintCount.ToString(), options.CopyCount.ToString());
+            Device.clearbuffer();
             Device.closeport();
         }
 
         protected void Setup(TSCPrinterSetupOptions options)
         {
+            // 버퍼 초기화
+            Device.clearbuffer();
+
             // 기본 설정
             Device.setup(options.LabelWidthMillimeter.ToString(),
                 options.LabelHeightMillimeter.ToString(),
@@ -41,16 +70,16 @@ namespace Hyunmui.TSCPrinter
             switch (options.PrintDirection)
             {
                 case PrintDirection.Reverse:
-                    Device.sendcommand("DIRECTION 0");
-                    break;
-                case PrintDirection.NormalMirror:
-                    Device.sendcommand("DIRECTION 1,1");
+                    Device.sendcommand("DIRECTION 0,0");
                     break;
                 case PrintDirection.ReverseMirror:
                     Device.sendcommand("DIRECTION 0,1");
                     break;
+                case PrintDirection.NormalMirror:
+                    Device.sendcommand("DIRECTION 1,1");
+                    break;
                 default:
-                    Device.sendcommand("DIRECTION 1");
+                    Device.sendcommand("DIRECTION 1,0");
                     break;
             }
 
@@ -65,9 +94,6 @@ namespace Hyunmui.TSCPrinter
 
             // Reference X/Y
             Device.sendcommand($"REFERENCE {options.ReferenceX.ToDots(Dpi)},{options.ReferenceY.ToDots(Dpi)}");
-
-            // 버퍼 초기화
-            Device.clearbuffer();
         }
 
         public void FormFeed(TSCPrinterSetupOptions options)
