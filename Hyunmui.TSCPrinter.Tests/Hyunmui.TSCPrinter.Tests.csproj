@@ -26,4 +26,9 @@
     <ProjectReference Include="..\Hyunmui.TSCPrinter\Hyunmui.TSCPrinter.csproj" />
   </ItemGroup>
 
+  <!-- 실물 프린터 통합 테스트는 RUN_TSC_PRINTER_TESTS=1인 환경에서만 포함합니다. -->
+  <ItemGroup Condition="'$(RUN_TSC_PRINTER_TESTS)' != '1'">
+    <Compile Remove="TSCPrinterTests.cs" />
+  </ItemGroup>
+
 </Project>
