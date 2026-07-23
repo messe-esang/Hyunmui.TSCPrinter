@@ -80,4 +80,11 @@ namespace Hyunmui.TSCPrinter.Enums
     {
         Gap, BlackLine
     }
+
+    public enum DitheringMode
+    {
+        None,
+        Halftone,
+        ErrorDiffusion
+    }
 }

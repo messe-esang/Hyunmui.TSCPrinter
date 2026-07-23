@@ -1,12 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Version>1.4.1</Version>
+		<Version>1.5.0</Version>
 		<Authors>hyunmui</Authors>
 		<Product>TSC Printer DotNet SDK</Product>
 		<Description>TSC 프린터 연동용 닷넷 SDK</Description>
 		<PackageTags>TSC TTP-247 TSCL TSCL2</PackageTags>
 		<ProjectUrl>https://github.com/hyunmui/Hyunmui.TSCPrinter</ProjectUrl>
+		<RepositoryUrl>https://github.com/messe-esang/Hyunmui.TSCPrinter</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 
 		<TargetFramework>netstandard2.0</TargetFramework>

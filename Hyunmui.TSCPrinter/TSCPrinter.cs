@@ -46,7 +46,10 @@ namespace Hyunmui.TSCPrinter
             }
 
             Setup(options);
-            Device.sendpicture(0, 0, bitmap);
+            using (var printableBitmap = BitmapDithering.Apply(bitmap, options.DitheringMode))
+            {
+                Device.sendpicture(0, 0, printableBitmap);
+            }
             Device.printlabel(options.PrintCount.ToString(), options.CopyCount.ToString());
             Device.clearbuffer();
             Device.closeport();

@@ -11,6 +11,7 @@ namespace Hyunmui.TSCPrinter
         public int LabelHeightMillimeter { get; set; }
         public int Speed { get; set; } = 7;
         public int Density { get; set; } = 9;
+        public DitheringMode DitheringMode { get; set; } = DitheringMode.None;
         public SensorType SensorType { get; set; } = SensorType.Gap;
         /// <summary>
         /// 단위: mm
