@@ -26,3 +26,17 @@
 ## .NET 10 테스트 전환 통합 (2026-09-07)
 
 EventGate develop에 .NET 10 전환이 반영되어, 공용 main의 `9dff12147d61a2ea77b45dcbd585485a5653f7a1`을 이미지 수정 브랜치에 병합했다. 이미지 수정과 공개 라이브러리의 netstandard2.0을 유지하면서 공용 테스트 대상/도구만 main과 같이 net10.0-windows로 맞췄다. SDK 10.0.400에서 26개 테스트가 통과했다. 이미지 변경을 되돌릴 때 .NET 10 테스트 전환을 유지하려면 소비자의 포인터를 `9dff1214`로 되돌린다.
+
+## PRN-02A TCP 연결 상태 분리 (2026-09-07)
+
+기준 커밋은 `b6c541631fa723828e3835683c61247ae4a3bf3f`다. `ethernet`의 기본 소켓과 번호 1~5의 소켓·주소가 static이어서, 두 인스턴스를 열면 이전 인스턴스의 명령과 close 호출이 나중에 열린 프린터에 적용됐다. `openport_mult`는 번호별 주소를 만들고도 기본 `ipe`로 연결했으며, 지연 인자가 없는 overload는 실제 TCP 포트 대신 슬롯 번호를 주소에 넣었다.
+
+소켓과 주소 12개를 인스턴스 필드로 옮겼다. 연결·전송·수신·종료는 해당 인스턴스의 필드를 참조한다. 다중 포트의 두 open overload는 지정한 `portnumber`와 슬롯별 주소를 사용하고, 상태 수신도 해당 슬롯의 주소를 사용한다. 공개 메서드 서명, 명령 인코딩·CRLF·반환값, 기존 연결 대기 시간과 timeout 값은 유지한다.
+
+`EthernetConnectionTests`는 실제 loopback TCP 서버와 임시 포트를 사용한다. 운영 프린터·고정 포트·DB를 사용하지 않는다. 정상 인스턴스 두 개의 동시 20회 출력, 종료 격리, close 후 재연결, 기본 연결 없이 각 1~5번 슬롯 연결(두 overload), 서로 다른 인스턴스의 같은 슬롯, 기본+5개 슬롯의 명령·상태 응답, 잘못된 슬롯의 기존 반환값을 검사한다. 기존 코드에서는 19개 중 17개가 실패했고 수정 후 19개가 통과했다. 같은 테스트 소스를 EventGate.Printer.Tests에 연결한다.
+
+추가로 명령 인코딩·설정·파일 전송의 고정 바이트, 기기 정보·문자열 상태 조회, ACK 종료 응답을 검증하여 TCP 테스트를 37개로 확장했다. 공용 전체 63개·EventGate 프린터 전체 96개가 통과했다. OpenCover와 수정 diff를 대조하면 변경된 실행 지점 266개 중 246개가 실행됐으며, 이는 Sonar의 라인·분기 coverage 수치와 구별한다.
+
+이 배치는 TCP 연결의 소유 범위를 수정한다. 동일 인스턴스에 대한 동시 호출, close 없이 다시 open할 때의 이전 소켓 수명, 연결 실패·취소 및 BeginConnect/EndConnect 처리, 진단 문자열과 GDI raster의 나머지 공유 상태는 후속 배치다. `printersetting_mult`가 번호별 소켓에 쓰고 기본 소켓의 ReadToStream으로 읽는 문제도 별도 수정·테스트가 필요하다. Microsoft의 [BeginConnect 계약](https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.socket.beginconnect)은 EndConnect로 완료하도록 명시한다. 기존 코드에는 완료 호출이 없으며 이번 상태 분리만으로 이를 해결했다고 간주하지 않는다. USB/Serial/드라이버 연결과 실제 TCP 프린터의 출력·커터·장시간 검증도 별도로 남는다.
+
+영향은 공개 TCP SDK를 사용하는 소비자다. 서로 다른 인스턴스 사이에서 전역 연결을 공유하던 호출자는 같은 인스턴스로 open/send/close를 수행해야 한다. EventGate의 현재 고수준 TSCPrinter wrapper는 USB를 사용하며 TCP를 직접 생성하는 업무 호출은 저장소 검색에서 발견되지 않았다. 외부 소비자와 실장비 검증 전 NuGet 릴리스·main 병합은 수행하지 않는다. 롤백은 공용 커밋 revert 또는 소비자의 포인터를 위 기준 커밋으로 되돌리는 것이다.

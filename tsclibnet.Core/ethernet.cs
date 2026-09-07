@@ -20,18 +20,18 @@ namespace TSCSDK
 {
     public class ethernet
     {
-        private static Socket tempSocket = (Socket)null;
-        private static Socket tempSocket1 = (Socket)null;
-        private static Socket tempSocket2 = (Socket)null;
-        private static Socket tempSocket3 = (Socket)null;
-        private static Socket tempSocket4 = (Socket)null;
-        private static Socket tempSocket5 = (Socket)null;
-        private static EndPoint ipe = (EndPoint)null;
-        private static EndPoint ipe1 = (EndPoint)null;
-        private static EndPoint ipe2 = (EndPoint)null;
-        private static EndPoint ipe3 = (EndPoint)null;
-        private static EndPoint ipe4 = (EndPoint)null;
-        private static EndPoint ipe5 = (EndPoint)null;
+        private Socket tempSocket = (Socket)null;
+        private Socket tempSocket1 = (Socket)null;
+        private Socket tempSocket2 = (Socket)null;
+        private Socket tempSocket3 = (Socket)null;
+        private Socket tempSocket4 = (Socket)null;
+        private Socket tempSocket5 = (Socket)null;
+        private EndPoint ipe = (EndPoint)null;
+        private EndPoint ipe1 = (EndPoint)null;
+        private EndPoint ipe2 = (EndPoint)null;
+        private EndPoint ipe3 = (EndPoint)null;
+        private EndPoint ipe4 = (EndPoint)null;
+        private EndPoint ipe5 = (EndPoint)null;
         private static string CRLF = "\r\n";
         private static byte[] CRLF_byte = new byte[2]
         {
@@ -137,24 +137,24 @@ namespace TSCSDK
 
         public bool openport(string ipaddress, int port)
         {
-            ethernet.ipe = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), port);
-            ethernet.tempSocket = new Socket(ethernet.ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            ethernet.tempSocket.BeginConnect(ethernet.ipe, (AsyncCallback)null, (object)null);
-            ethernet.tempSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
-            ethernet.tempSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
+            this.ipe = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), port);
+            this.tempSocket = new Socket(this.ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            this.tempSocket.BeginConnect(this.ipe, (AsyncCallback)null, (object)null);
+            this.tempSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
+            this.tempSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
             Thread.Sleep(200);
-            return ethernet.tempSocket.Connected;
+            return this.tempSocket.Connected;
         }
 
         public bool openport(string ipaddress, int port, int delay)
         {
-            ethernet.ipe = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), port);
-            ethernet.tempSocket = new Socket(ethernet.ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            ethernet.tempSocket.BeginConnect(ethernet.ipe, (AsyncCallback)null, (object)null);
-            ethernet.tempSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 5000);
-            ethernet.tempSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
+            this.ipe = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), port);
+            this.tempSocket = new Socket(this.ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            this.tempSocket.BeginConnect(this.ipe, (AsyncCallback)null, (object)null);
+            this.tempSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 5000);
+            this.tempSocket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
             Thread.Sleep(delay);
-            return ethernet.tempSocket.Connected;
+            return this.tempSocket.Connected;
         }
 
         public int openport_mult(int port, string ipaddress, int portnumber)
@@ -162,39 +162,39 @@ namespace TSCSDK
             switch (port)
             {
                 case 1:
-                    ethernet.ipe1 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), port);
-                    ethernet.tempSocket1 = new Socket(ethernet.ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    ethernet.tempSocket1.BeginConnect(ethernet.ipe, (AsyncCallback)null, (object)null);
-                    ethernet.tempSocket1.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
-                    ethernet.tempSocket1.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
+                    this.ipe1 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
+                    this.tempSocket1 = new Socket(this.ipe1.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    this.tempSocket1.BeginConnect(this.ipe1, (AsyncCallback)null, (object)null);
+                    this.tempSocket1.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
+                    this.tempSocket1.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
                     return 1;
                 case 2:
-                    ethernet.ipe2 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), port);
-                    ethernet.tempSocket2 = new Socket(ethernet.ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    ethernet.tempSocket2.BeginConnect(ethernet.ipe, (AsyncCallback)null, (object)null);
-                    ethernet.tempSocket2.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
-                    ethernet.tempSocket2.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
+                    this.ipe2 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
+                    this.tempSocket2 = new Socket(this.ipe2.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    this.tempSocket2.BeginConnect(this.ipe2, (AsyncCallback)null, (object)null);
+                    this.tempSocket2.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
+                    this.tempSocket2.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
                     return 1;
                 case 3:
-                    ethernet.ipe3 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), port);
-                    ethernet.tempSocket3 = new Socket(ethernet.ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    ethernet.tempSocket3.BeginConnect(ethernet.ipe, (AsyncCallback)null, (object)null);
-                    ethernet.tempSocket3.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
-                    ethernet.tempSocket3.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
+                    this.ipe3 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
+                    this.tempSocket3 = new Socket(this.ipe3.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    this.tempSocket3.BeginConnect(this.ipe3, (AsyncCallback)null, (object)null);
+                    this.tempSocket3.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
+                    this.tempSocket3.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
                     return 1;
                 case 4:
-                    ethernet.ipe4 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), port);
-                    ethernet.tempSocket4 = new Socket(ethernet.ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    ethernet.tempSocket4.BeginConnect(ethernet.ipe, (AsyncCallback)null, (object)null);
-                    ethernet.tempSocket4.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
-                    ethernet.tempSocket4.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
+                    this.ipe4 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
+                    this.tempSocket4 = new Socket(this.ipe4.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    this.tempSocket4.BeginConnect(this.ipe4, (AsyncCallback)null, (object)null);
+                    this.tempSocket4.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
+                    this.tempSocket4.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
                     return 1;
                 case 5:
-                    ethernet.ipe5 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), port);
-                    ethernet.tempSocket5 = new Socket(ethernet.ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    ethernet.tempSocket5.BeginConnect(ethernet.ipe, (AsyncCallback)null, (object)null);
-                    ethernet.tempSocket5.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
-                    ethernet.tempSocket5.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
+                    this.ipe5 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
+                    this.tempSocket5 = new Socket(this.ipe5.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    this.tempSocket5.BeginConnect(this.ipe5, (AsyncCallback)null, (object)null);
+                    this.tempSocket5.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
+                    this.tempSocket5.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
                     return 1;
                 default:
                     return 0;
@@ -206,43 +206,43 @@ namespace TSCSDK
             switch (port)
             {
                 case 1:
-                    ethernet.ipe1 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
-                    ethernet.tempSocket1 = new Socket(ethernet.ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    ethernet.tempSocket1.BeginConnect(ethernet.ipe, (AsyncCallback)null, (object)null);
-                    ethernet.tempSocket1.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
-                    ethernet.tempSocket1.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
+                    this.ipe1 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
+                    this.tempSocket1 = new Socket(this.ipe1.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    this.tempSocket1.BeginConnect(this.ipe1, (AsyncCallback)null, (object)null);
+                    this.tempSocket1.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
+                    this.tempSocket1.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
                     Thread.Sleep(delay);
                     return 1;
                 case 2:
-                    ethernet.ipe2 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
-                    ethernet.tempSocket2 = new Socket(ethernet.ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    ethernet.tempSocket2.BeginConnect(ethernet.ipe, (AsyncCallback)null, (object)null);
-                    ethernet.tempSocket2.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
-                    ethernet.tempSocket2.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
+                    this.ipe2 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
+                    this.tempSocket2 = new Socket(this.ipe2.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    this.tempSocket2.BeginConnect(this.ipe2, (AsyncCallback)null, (object)null);
+                    this.tempSocket2.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
+                    this.tempSocket2.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
                     Thread.Sleep(delay);
                     return 1;
                 case 3:
-                    ethernet.ipe3 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
-                    ethernet.tempSocket3 = new Socket(ethernet.ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    ethernet.tempSocket3.BeginConnect(ethernet.ipe, (AsyncCallback)null, (object)null);
-                    ethernet.tempSocket3.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
-                    ethernet.tempSocket3.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
+                    this.ipe3 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
+                    this.tempSocket3 = new Socket(this.ipe3.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    this.tempSocket3.BeginConnect(this.ipe3, (AsyncCallback)null, (object)null);
+                    this.tempSocket3.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
+                    this.tempSocket3.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
                     Thread.Sleep(delay);
                     return 1;
                 case 4:
-                    ethernet.ipe4 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
-                    ethernet.tempSocket4 = new Socket(ethernet.ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    ethernet.tempSocket4.BeginConnect(ethernet.ipe, (AsyncCallback)null, (object)null);
-                    ethernet.tempSocket4.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
-                    ethernet.tempSocket4.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
+                    this.ipe4 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
+                    this.tempSocket4 = new Socket(this.ipe4.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    this.tempSocket4.BeginConnect(this.ipe4, (AsyncCallback)null, (object)null);
+                    this.tempSocket4.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
+                    this.tempSocket4.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
                     Thread.Sleep(delay);
                     return 1;
                 case 5:
-                    ethernet.ipe5 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
-                    ethernet.tempSocket5 = new Socket(ethernet.ipe.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    ethernet.tempSocket5.BeginConnect(ethernet.ipe, (AsyncCallback)null, (object)null);
-                    ethernet.tempSocket5.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
-                    ethernet.tempSocket5.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
+                    this.ipe5 = (EndPoint)new IPEndPoint(IPAddress.Parse(ipaddress), portnumber);
+                    this.tempSocket5 = new Socket(this.ipe5.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    this.tempSocket5.BeginConnect(this.ipe5, (AsyncCallback)null, (object)null);
+                    this.tempSocket5.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReceiveTimeout, 2000);
+                    this.tempSocket5.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.SendTimeout, 5000);
                     Thread.Sleep(delay);
                     return 1;
                 default:
@@ -250,12 +250,12 @@ namespace TSCSDK
             }
         }
 
-        public void closeport() => ethernet.tempSocket.Close();
+        public void closeport() => this.tempSocket.Close();
 
         public void closeport(int delay)
         {
             Thread.Sleep(delay);
-            ethernet.tempSocket.Close();
+            this.tempSocket.Close();
         }
 
         public int closeport_mult(int portnumber, int delay)
@@ -264,23 +264,23 @@ namespace TSCSDK
             {
                 case 1:
                     Thread.Sleep(delay);
-                    ethernet.tempSocket1.Close();
+                    this.tempSocket1.Close();
                     return 1;
                 case 2:
                     Thread.Sleep(delay);
-                    ethernet.tempSocket2.Close();
+                    this.tempSocket2.Close();
                     return 1;
                 case 3:
                     Thread.Sleep(delay);
-                    ethernet.tempSocket3.Close();
+                    this.tempSocket3.Close();
                     return 1;
                 case 4:
                     Thread.Sleep(delay);
-                    ethernet.tempSocket4.Close();
+                    this.tempSocket4.Close();
                     return 1;
                 case 5:
                     Thread.Sleep(delay);
-                    ethernet.tempSocket5.Close();
+                    this.tempSocket5.Close();
                     return 1;
                 default:
                     return 0;
@@ -291,8 +291,8 @@ namespace TSCSDK
         {
             byte[] bytes1 = Encoding.ASCII.GetBytes(command);
             byte[] bytes2 = Encoding.ASCII.GetBytes(ethernet.CRLF);
-            ethernet.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
         }
 
         public int sendcommand_hex(string hex_data)
@@ -356,24 +356,24 @@ namespace TSCSDK
         {
             byte[] bytes1 = Encoding.UTF8.GetBytes(command);
             byte[] bytes2 = Encoding.ASCII.GetBytes(ethernet.CRLF);
-            ethernet.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
         }
 
         public void sendcommand_gb2312(string command)
         {
             byte[] bytes1 = Encoding.GetEncoding("gb2312").GetBytes(command);
             byte[] bytes2 = Encoding.ASCII.GetBytes(ethernet.CRLF);
-            ethernet.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
         }
 
         public void sendcommand_big5(string command)
         {
             byte[] bytes1 = Encoding.GetEncoding("big5").GetBytes(command);
             byte[] bytes2 = Encoding.ASCII.GetBytes(ethernet.CRLF);
-            ethernet.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
         }
 
         public string sendcommand_getstring(string command)
@@ -395,32 +395,32 @@ namespace TSCSDK
                 case 1:
                     byte[] bytes1 = Encoding.ASCII.GetBytes(command);
                     byte[] bytes2 = Encoding.ASCII.GetBytes(ethernet.CRLF);
-                    ethernet.tempSocket1.Send(bytes1, bytes1.Length, SocketFlags.None);
-                    ethernet.tempSocket1.Send(bytes2, bytes2.Length, SocketFlags.None);
+                    this.tempSocket1.Send(bytes1, bytes1.Length, SocketFlags.None);
+                    this.tempSocket1.Send(bytes2, bytes2.Length, SocketFlags.None);
                     return 1;
                 case 2:
                     byte[] bytes3 = Encoding.ASCII.GetBytes(command);
                     byte[] bytes4 = Encoding.ASCII.GetBytes(ethernet.CRLF);
-                    ethernet.tempSocket2.Send(bytes3, bytes3.Length, SocketFlags.None);
-                    ethernet.tempSocket2.Send(bytes4, bytes4.Length, SocketFlags.None);
+                    this.tempSocket2.Send(bytes3, bytes3.Length, SocketFlags.None);
+                    this.tempSocket2.Send(bytes4, bytes4.Length, SocketFlags.None);
                     return 1;
                 case 3:
                     byte[] bytes5 = Encoding.ASCII.GetBytes(command);
                     byte[] bytes6 = Encoding.ASCII.GetBytes(ethernet.CRLF);
-                    ethernet.tempSocket3.Send(bytes5, bytes5.Length, SocketFlags.None);
-                    ethernet.tempSocket3.Send(bytes6, bytes6.Length, SocketFlags.None);
+                    this.tempSocket3.Send(bytes5, bytes5.Length, SocketFlags.None);
+                    this.tempSocket3.Send(bytes6, bytes6.Length, SocketFlags.None);
                     return 1;
                 case 4:
                     byte[] bytes7 = Encoding.ASCII.GetBytes(command);
                     byte[] bytes8 = Encoding.ASCII.GetBytes(ethernet.CRLF);
-                    ethernet.tempSocket4.Send(bytes7, bytes7.Length, SocketFlags.None);
-                    ethernet.tempSocket4.Send(bytes8, bytes8.Length, SocketFlags.None);
+                    this.tempSocket4.Send(bytes7, bytes7.Length, SocketFlags.None);
+                    this.tempSocket4.Send(bytes8, bytes8.Length, SocketFlags.None);
                     return 1;
                 case 5:
                     byte[] bytes9 = Encoding.ASCII.GetBytes(command);
                     byte[] bytes10 = Encoding.ASCII.GetBytes(ethernet.CRLF);
-                    ethernet.tempSocket5.Send(bytes9, bytes9.Length, SocketFlags.None);
-                    ethernet.tempSocket5.Send(bytes10, bytes10.Length, SocketFlags.None);
+                    this.tempSocket5.Send(bytes9, bytes9.Length, SocketFlags.None);
+                    this.tempSocket5.Send(bytes10, bytes10.Length, SocketFlags.None);
                     return 1;
                 default:
                     return 0;
@@ -431,15 +431,15 @@ namespace TSCSDK
         {
             byte[] bytes = Encoding.ASCII.GetBytes(command);
             Encoding.ASCII.GetBytes(ethernet.CRLF);
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
             return 1;
         }
 
         public void sendcommand(byte[] command)
         {
             byte[] bytes = Encoding.ASCII.GetBytes(ethernet.CRLF);
-            ethernet.tempSocket.Send(command, command.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(command, command.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
         }
 
         public int sendcommand_mult(int portnumber, byte[] command)
@@ -448,28 +448,28 @@ namespace TSCSDK
             {
                 case 1:
                     byte[] bytes1 = Encoding.ASCII.GetBytes(ethernet.CRLF);
-                    ethernet.tempSocket1.Send(command, command.Length, SocketFlags.None);
-                    ethernet.tempSocket1.Send(bytes1, bytes1.Length, SocketFlags.None);
+                    this.tempSocket1.Send(command, command.Length, SocketFlags.None);
+                    this.tempSocket1.Send(bytes1, bytes1.Length, SocketFlags.None);
                     return 1;
                 case 2:
                     byte[] bytes2 = Encoding.ASCII.GetBytes(ethernet.CRLF);
-                    ethernet.tempSocket2.Send(command, command.Length, SocketFlags.None);
-                    ethernet.tempSocket2.Send(bytes2, bytes2.Length, SocketFlags.None);
+                    this.tempSocket2.Send(command, command.Length, SocketFlags.None);
+                    this.tempSocket2.Send(bytes2, bytes2.Length, SocketFlags.None);
                     return 1;
                 case 3:
                     byte[] bytes3 = Encoding.ASCII.GetBytes(ethernet.CRLF);
-                    ethernet.tempSocket3.Send(command, command.Length, SocketFlags.None);
-                    ethernet.tempSocket3.Send(bytes3, bytes3.Length, SocketFlags.None);
+                    this.tempSocket3.Send(command, command.Length, SocketFlags.None);
+                    this.tempSocket3.Send(bytes3, bytes3.Length, SocketFlags.None);
                     return 1;
                 case 4:
                     byte[] bytes4 = Encoding.ASCII.GetBytes(ethernet.CRLF);
-                    ethernet.tempSocket4.Send(command, command.Length, SocketFlags.None);
-                    ethernet.tempSocket4.Send(bytes4, bytes4.Length, SocketFlags.None);
+                    this.tempSocket4.Send(command, command.Length, SocketFlags.None);
+                    this.tempSocket4.Send(bytes4, bytes4.Length, SocketFlags.None);
                     return 1;
                 case 5:
                     byte[] bytes5 = Encoding.ASCII.GetBytes(ethernet.CRLF);
-                    ethernet.tempSocket5.Send(command, command.Length, SocketFlags.None);
-                    ethernet.tempSocket5.Send(bytes5, bytes5.Length, SocketFlags.None);
+                    this.tempSocket5.Send(command, command.Length, SocketFlags.None);
+                    this.tempSocket5.Send(bytes5, bytes5.Length, SocketFlags.None);
                     return 1;
                 default:
                     return 0;
@@ -479,7 +479,7 @@ namespace TSCSDK
         public void sendcommandNOCRLF(byte[] command)
         {
             Encoding.ASCII.GetBytes(ethernet.CRLF);
-            ethernet.tempSocket.Send(command, command.Length, SocketFlags.None);
+            this.tempSocket.Send(command, command.Length, SocketFlags.None);
         }
 
         public void setup(
@@ -508,16 +508,16 @@ namespace TSCSDK
             byte[] bytes2 = Encoding.ASCII.GetBytes(s2);
             byte[] bytes3 = Encoding.ASCII.GetBytes(s3);
             byte[] bytes4 = Encoding.ASCII.GetBytes(s4);
-            ethernet.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(bytes3, bytes3.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(bytes4, bytes4.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes3, bytes3.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes4, bytes4.Length, SocketFlags.None);
         }
 
         public void clearbuffer()
         {
             byte[] bytes = Encoding.ASCII.GetBytes("CLS\r\n");
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
         }
 
         public void barcode(
@@ -532,7 +532,7 @@ namespace TSCSDK
           string code)
         {
             byte[] bytes = Encoding.ASCII.GetBytes("BARCODE " + x + "," + y + ",\"" + type + "\"," + height + "," + readable + "," + rotation + "," + narrow + "," + wide + ",\"" + code + "\"\r\n");
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
         }
 
         public void printerfont(
@@ -545,25 +545,25 @@ namespace TSCSDK
           string text)
         {
             byte[] bytes = Encoding.ASCII.GetBytes("TEXT " + x + "," + y + ",\"" + fonttype + "\"," + rotation + "," + xmul + "," + ymul + ",\"" + text + "\"\r\n");
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
         }
 
         public void printlabel(string a, string b)
         {
             byte[] bytes = Encoding.ASCII.GetBytes("PRINT " + a + ", " + b + "\r\n");
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
         }
 
         public void formfeed()
         {
             byte[] bytes = Encoding.ASCII.GetBytes("FORMFEED\r\n");
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
         }
 
         public void nobackfeed()
         {
             byte[] bytes = Encoding.ASCII.GetBytes("SET TEAR OFF\r\n");
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
         }
 
         public int downloadfile(string filename, string downloadname)
@@ -573,9 +573,9 @@ namespace TSCSDK
             byte[] bytes = Encoding.ASCII.GetBytes("DOWNLOAD F,\"" + downloadname + "\"," + (object)length + ",");
             try
             {
-                ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-                ethernet.tempSocket.Send(buffer, buffer.Length, SocketFlags.None);
-                ethernet.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
+                this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+                this.tempSocket.Send(buffer, buffer.Length, SocketFlags.None);
+                this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
             }
             catch (SocketException ex)
             {
@@ -591,9 +591,9 @@ namespace TSCSDK
             byte[] bytes = Encoding.ASCII.GetBytes("DOWNLOAD " + location + ",\"" + downloadname + "\"," + (object)length + ",");
             try
             {
-                ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-                ethernet.tempSocket.Send(buffer, buffer.Length, SocketFlags.None);
-                ethernet.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
+                this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+                this.tempSocket.Send(buffer, buffer.Length, SocketFlags.None);
+                this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
             }
             catch (SocketException ex)
             {
@@ -607,9 +607,9 @@ namespace TSCSDK
             byte[] buffer = System.IO.File.ReadAllBytes(filename);
             long length = (long)buffer.Length;
             byte[] bytes = Encoding.ASCII.GetBytes("DOWNLOAD F,\"" + imagename + "\"," + (object)length + ",");
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(buffer, buffer.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(buffer, buffer.Length, SocketFlags.None);
+            this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
         }
 
         public void downloadbmp(string filename, string imagename)
@@ -617,9 +617,9 @@ namespace TSCSDK
             byte[] buffer = System.IO.File.ReadAllBytes(filename);
             long length = (long)buffer.Length;
             byte[] bytes = Encoding.ASCII.GetBytes("DOWNLOAD F,\"" + imagename + "\"," + (object)length + ",");
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(buffer, buffer.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(buffer, buffer.Length, SocketFlags.None);
+            this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
         }
 
         public string about()
@@ -635,7 +635,7 @@ namespace TSCSDK
         (byte) 33,
         (byte) 82
             };
-            ethernet.tempSocket.Send(buffer, buffer.Length, SocketFlags.None);
+            this.tempSocket.Send(buffer, buffer.Length, SocketFlags.None);
         }
 
         public byte printerstatus()
@@ -647,13 +647,13 @@ namespace TSCSDK
         (byte) 33,
         (byte) 63
             };
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return 99;
-            ethernet.tempSocket.Send(buffer2, buffer2.Length, SocketFlags.None);
+            this.tempSocket.Send(buffer2, buffer2.Length, SocketFlags.None);
             Thread.Sleep(1000);
             do
                 ;
-            while (ethernet.tempSocket.ReceiveFrom(buffer1, ref ethernet.ipe) > 0 && ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+            while (this.tempSocket.ReceiveFrom(buffer1, ref this.ipe) > 0 && this.tempSocket.Poll(5000, SelectMode.SelectRead));
             return buffer1[0];
         }
 
@@ -666,13 +666,13 @@ namespace TSCSDK
         (byte) 33,
         (byte) 63
             };
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "error";
-            ethernet.tempSocket.Send(buffer2, buffer2.Length, SocketFlags.None);
+            this.tempSocket.Send(buffer2, buffer2.Length, SocketFlags.None);
             Thread.Sleep(1000);
             do
                 ;
-            while (ethernet.tempSocket.ReceiveFrom(buffer1, ref ethernet.ipe) > 0 && ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+            while (this.tempSocket.ReceiveFrom(buffer1, ref this.ipe) > 0 && this.tempSocket.Poll(5000, SelectMode.SelectRead));
             if (buffer1[0] == (byte)0)
                 return "00";
             if (buffer1[0] == (byte)1)
@@ -713,13 +713,13 @@ namespace TSCSDK
         (byte) 33,
         (byte) 63
             };
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "error";
-            ethernet.tempSocket.Send(buffer2, buffer2.Length, SocketFlags.None);
+            this.tempSocket.Send(buffer2, buffer2.Length, SocketFlags.None);
             Thread.Sleep(delay);
             do
                 ;
-            while (ethernet.tempSocket.ReceiveFrom(buffer1, ref ethernet.ipe) > 0 && ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+            while (this.tempSocket.ReceiveFrom(buffer1, ref this.ipe) > 0 && this.tempSocket.Poll(5000, SelectMode.SelectRead));
             if (buffer1[0] == (byte)0)
                 return "00";
             if (buffer1[0] == (byte)1)
@@ -763,13 +763,13 @@ namespace TSCSDK
             (byte) 33,
             (byte) 63
                     };
-                    if (!ethernet.tempSocket1.Connected)
+                    if (!this.tempSocket1.Connected)
                         return 99;
-                    ethernet.tempSocket1.Send(buffer2, buffer2.Length, SocketFlags.None);
+                    this.tempSocket1.Send(buffer2, buffer2.Length, SocketFlags.None);
                     Thread.Sleep(1000);
                     do
                         ;
-                    while (ethernet.tempSocket1.ReceiveFrom(buffer1, ref ethernet.ipe) > 0 && ethernet.tempSocket1.Poll(5000, SelectMode.SelectRead));
+                    while (this.tempSocket1.ReceiveFrom(buffer1, ref this.ipe1) > 0 && this.tempSocket1.Poll(5000, SelectMode.SelectRead));
                     return buffer1[0];
                 case 2:
                     byte[] buffer3 = new byte[256];
@@ -779,13 +779,13 @@ namespace TSCSDK
             (byte) 33,
             (byte) 63
                     };
-                    if (!ethernet.tempSocket2.Connected)
+                    if (!this.tempSocket2.Connected)
                         return 99;
-                    ethernet.tempSocket2.Send(buffer4, buffer4.Length, SocketFlags.None);
+                    this.tempSocket2.Send(buffer4, buffer4.Length, SocketFlags.None);
                     Thread.Sleep(1000);
                     do
                         ;
-                    while (ethernet.tempSocket2.ReceiveFrom(buffer3, ref ethernet.ipe) > 0 && ethernet.tempSocket2.Poll(5000, SelectMode.SelectRead));
+                    while (this.tempSocket2.ReceiveFrom(buffer3, ref this.ipe2) > 0 && this.tempSocket2.Poll(5000, SelectMode.SelectRead));
                     return buffer3[0];
                 case 3:
                     byte[] buffer5 = new byte[256];
@@ -795,13 +795,13 @@ namespace TSCSDK
             (byte) 33,
             (byte) 63
                     };
-                    if (!ethernet.tempSocket3.Connected)
+                    if (!this.tempSocket3.Connected)
                         return 99;
-                    ethernet.tempSocket3.Send(buffer6, buffer6.Length, SocketFlags.None);
+                    this.tempSocket3.Send(buffer6, buffer6.Length, SocketFlags.None);
                     Thread.Sleep(1000);
                     do
                         ;
-                    while (ethernet.tempSocket3.ReceiveFrom(buffer5, ref ethernet.ipe) > 0 && ethernet.tempSocket3.Poll(5000, SelectMode.SelectRead));
+                    while (this.tempSocket3.ReceiveFrom(buffer5, ref this.ipe3) > 0 && this.tempSocket3.Poll(5000, SelectMode.SelectRead));
                     return buffer5[0];
                 case 4:
                     byte[] buffer7 = new byte[256];
@@ -811,13 +811,13 @@ namespace TSCSDK
             (byte) 33,
             (byte) 63
                     };
-                    if (!ethernet.tempSocket4.Connected)
+                    if (!this.tempSocket4.Connected)
                         return 99;
-                    ethernet.tempSocket4.Send(buffer8, buffer8.Length, SocketFlags.None);
+                    this.tempSocket4.Send(buffer8, buffer8.Length, SocketFlags.None);
                     Thread.Sleep(1000);
                     do
                         ;
-                    while (ethernet.tempSocket4.ReceiveFrom(buffer7, ref ethernet.ipe) > 0 && ethernet.tempSocket4.Poll(5000, SelectMode.SelectRead));
+                    while (this.tempSocket4.ReceiveFrom(buffer7, ref this.ipe4) > 0 && this.tempSocket4.Poll(5000, SelectMode.SelectRead));
                     return buffer7[0];
                 case 5:
                     byte[] buffer9 = new byte[256];
@@ -827,13 +827,13 @@ namespace TSCSDK
             (byte) 33,
             (byte) 63
                     };
-                    if (!ethernet.tempSocket5.Connected)
+                    if (!this.tempSocket5.Connected)
                         return 99;
-                    ethernet.tempSocket5.Send(buffer10, buffer10.Length, SocketFlags.None);
+                    this.tempSocket5.Send(buffer10, buffer10.Length, SocketFlags.None);
                     Thread.Sleep(1000);
                     do
                         ;
-                    while (ethernet.tempSocket5.ReceiveFrom(buffer9, ref ethernet.ipe) > 0 && ethernet.tempSocket5.Poll(5000, SelectMode.SelectRead));
+                    while (this.tempSocket5.ReceiveFrom(buffer9, ref this.ipe5) > 0 && this.tempSocket5.Poll(5000, SelectMode.SelectRead));
                     return buffer9[0];
                 default:
                     return 99;
@@ -853,11 +853,11 @@ namespace TSCSDK
             (byte) 33,
             (byte) 63
                     };
-                    if (!ethernet.tempSocket1.Connected)
+                    if (!this.tempSocket1.Connected)
                         return "error";
-                    ethernet.tempSocket1.Send(buffer2, buffer2.Length, SocketFlags.None);
+                    this.tempSocket1.Send(buffer2, buffer2.Length, SocketFlags.None);
                     Thread.Sleep(1000);
-                    while (ethernet.tempSocket1.ReceiveFrom(buffer1, ref ethernet.ipe) > 0 && ethernet.tempSocket1.Poll(5000, SelectMode.SelectRead))
+                    while (this.tempSocket1.ReceiveFrom(buffer1, ref this.ipe1) > 0 && this.tempSocket1.Poll(5000, SelectMode.SelectRead))
                         ;
                     break;
                 case 2:
@@ -868,11 +868,11 @@ namespace TSCSDK
             (byte) 33,
             (byte) 63
                     };
-                    if (!ethernet.tempSocket2.Connected)
+                    if (!this.tempSocket2.Connected)
                         return "error";
-                    ethernet.tempSocket2.Send(buffer3, buffer3.Length, SocketFlags.None);
+                    this.tempSocket2.Send(buffer3, buffer3.Length, SocketFlags.None);
                     Thread.Sleep(1000);
-                    while (ethernet.tempSocket2.ReceiveFrom(buffer1, ref ethernet.ipe) > 0 && ethernet.tempSocket2.Poll(5000, SelectMode.SelectRead))
+                    while (this.tempSocket2.ReceiveFrom(buffer1, ref this.ipe2) > 0 && this.tempSocket2.Poll(5000, SelectMode.SelectRead))
                         ;
                     break;
                 case 3:
@@ -883,11 +883,11 @@ namespace TSCSDK
             (byte) 33,
             (byte) 63
                     };
-                    if (!ethernet.tempSocket3.Connected)
+                    if (!this.tempSocket3.Connected)
                         return "error";
-                    ethernet.tempSocket3.Send(buffer4, buffer4.Length, SocketFlags.None);
+                    this.tempSocket3.Send(buffer4, buffer4.Length, SocketFlags.None);
                     Thread.Sleep(1000);
-                    while (ethernet.tempSocket3.ReceiveFrom(buffer1, ref ethernet.ipe) > 0 && ethernet.tempSocket3.Poll(5000, SelectMode.SelectRead))
+                    while (this.tempSocket3.ReceiveFrom(buffer1, ref this.ipe3) > 0 && this.tempSocket3.Poll(5000, SelectMode.SelectRead))
                         ;
                     break;
                 case 4:
@@ -898,11 +898,11 @@ namespace TSCSDK
             (byte) 33,
             (byte) 63
                     };
-                    if (!ethernet.tempSocket4.Connected)
+                    if (!this.tempSocket4.Connected)
                         return "error";
-                    ethernet.tempSocket4.Send(buffer5, buffer5.Length, SocketFlags.None);
+                    this.tempSocket4.Send(buffer5, buffer5.Length, SocketFlags.None);
                     Thread.Sleep(1000);
-                    while (ethernet.tempSocket4.ReceiveFrom(buffer1, ref ethernet.ipe) > 0 && ethernet.tempSocket4.Poll(5000, SelectMode.SelectRead))
+                    while (this.tempSocket4.ReceiveFrom(buffer1, ref this.ipe4) > 0 && this.tempSocket4.Poll(5000, SelectMode.SelectRead))
                         ;
                     break;
                 case 5:
@@ -913,11 +913,11 @@ namespace TSCSDK
             (byte) 33,
             (byte) 63
                     };
-                    if (!ethernet.tempSocket5.Connected)
+                    if (!this.tempSocket5.Connected)
                         return "error";
-                    ethernet.tempSocket5.Send(buffer6, buffer6.Length, SocketFlags.None);
+                    this.tempSocket5.Send(buffer6, buffer6.Length, SocketFlags.None);
                     Thread.Sleep(1000);
-                    while (ethernet.tempSocket5.ReceiveFrom(buffer1, ref ethernet.ipe) > 0 && ethernet.tempSocket5.Poll(5000, SelectMode.SelectRead))
+                    while (this.tempSocket5.ReceiveFrom(buffer1, ref this.ipe5) > 0 && this.tempSocket5.Poll(5000, SelectMode.SelectRead))
                         ;
                     break;
             }
@@ -958,12 +958,12 @@ namespace TSCSDK
             byte[] bytes1 = Encoding.Default.GetBytes("OUT CHR$(06)");
             byte[] bytes2 = Encoding.ASCII.GetBytes(s);
             byte judgement = 6;
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "error";
-            ethernet.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
+            this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
+            this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
             if (this.ReadToStream(delay, judgement))
                 ;
             return ethernet.byte_to_string;
@@ -975,12 +975,12 @@ namespace TSCSDK
             byte[] bytes1 = Encoding.Default.GetBytes("OUT CHR$(06)");
             byte[] bytes2 = Encoding.ASCII.GetBytes(s);
             byte judgement = 6;
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "error";
-            ethernet.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
-            ethernet.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
+            this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
+            this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
             Thread.Sleep(delay1);
             if (this.ReadToStream(delay2, judgement))
                 ;
@@ -996,41 +996,41 @@ namespace TSCSDK
             {
                 case 1:
                     byte[] numArray2 = new byte[256];
-                    if (!ethernet.tempSocket1.Connected)
+                    if (!this.tempSocket1.Connected)
                         return "error";
-                    ethernet.tempSocket1.Send(bytes, bytes.Length, SocketFlags.None);
+                    this.tempSocket1.Send(bytes, bytes.Length, SocketFlags.None);
                     if (this.ReadToStream(1000, judgement))
                         break;
                     break;
                 case 2:
                     byte[] numArray3 = new byte[256];
-                    if (!ethernet.tempSocket2.Connected)
+                    if (!this.tempSocket2.Connected)
                         return "error";
-                    ethernet.tempSocket2.Send(bytes, bytes.Length, SocketFlags.None);
+                    this.tempSocket2.Send(bytes, bytes.Length, SocketFlags.None);
                     if (this.ReadToStream(1000, judgement))
                         break;
                     break;
                 case 3:
                     byte[] numArray4 = new byte[256];
-                    if (!ethernet.tempSocket3.Connected)
+                    if (!this.tempSocket3.Connected)
                         return "error";
-                    ethernet.tempSocket3.Send(bytes, bytes.Length, SocketFlags.None);
+                    this.tempSocket3.Send(bytes, bytes.Length, SocketFlags.None);
                     if (this.ReadToStream(1000, judgement))
                         break;
                     break;
                 case 4:
                     byte[] numArray5 = new byte[256];
-                    if (!ethernet.tempSocket4.Connected)
+                    if (!this.tempSocket4.Connected)
                         return "error";
-                    ethernet.tempSocket4.Send(bytes, bytes.Length, SocketFlags.None);
+                    this.tempSocket4.Send(bytes, bytes.Length, SocketFlags.None);
                     if (this.ReadToStream(1000, judgement))
                         break;
                     break;
                 case 5:
                     byte[] numArray6 = new byte[256];
-                    if (!ethernet.tempSocket5.Connected)
+                    if (!this.tempSocket5.Connected)
                         return "error";
-                    ethernet.tempSocket5.Send(bytes, bytes.Length, SocketFlags.None);
+                    this.tempSocket5.Send(bytes, bytes.Length, SocketFlags.None);
                     if (this.ReadToStream(1000, judgement))
                         break;
                     break;
@@ -1048,9 +1048,9 @@ namespace TSCSDK
         (byte) 33,
         (byte) 83
             };
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "-1";
-            ethernet.tempSocket.Send(buffer, buffer.Length, SocketFlags.None);
+            this.tempSocket.Send(buffer, buffer.Length, SocketFlags.None);
             Thread.Sleep(1000);
             try
             {
@@ -1059,12 +1059,12 @@ namespace TSCSDK
                     int count;
                     do
                     {
-                        count = ethernet.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
+                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
                     }
                     while (count <= 0);
                     str = (str + Encoding.ASCII.GetString(numArray, 0, count)).Substring(1, 4);
                 }
-                while (ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
             }
             catch
             {
@@ -1083,9 +1083,9 @@ namespace TSCSDK
         (byte) 33,
         (byte) 83
             };
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "-1";
-            ethernet.tempSocket.Send(buffer, buffer.Length, SocketFlags.None);
+            this.tempSocket.Send(buffer, buffer.Length, SocketFlags.None);
             Thread.Sleep(delay);
             try
             {
@@ -1094,12 +1094,12 @@ namespace TSCSDK
                     int count;
                     do
                     {
-                        count = ethernet.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
+                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
                     }
                     while (count <= 0);
                     str = (str + Encoding.ASCII.GetString(numArray, 0, count)).Substring(1, 4);
                 }
-                while (ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
             }
             catch
             {
@@ -1121,9 +1121,9 @@ namespace TSCSDK
             byte[] numArray = new byte[256];
             string str = "";
             byte[] bytes = Encoding.ASCII.GetBytes("~!I");
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "-1";
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
             Thread.Sleep(delay);
             try
             {
@@ -1132,12 +1132,12 @@ namespace TSCSDK
                     int count;
                     do
                     {
-                        count = ethernet.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
+                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
                     }
                     while (count <= 0);
                     str += Encoding.ASCII.GetString(numArray, 0, count);
                 }
-                while (ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
             }
             catch
             {
@@ -1151,9 +1151,9 @@ namespace TSCSDK
             byte[] numArray = new byte[256];
             string str = "";
             byte[] bytes = Encoding.ASCII.GetBytes("~!@");
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "-1";
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
             Thread.Sleep(1000);
             try
             {
@@ -1162,12 +1162,12 @@ namespace TSCSDK
                     int count;
                     do
                     {
-                        count = ethernet.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
+                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
                     }
                     while (count <= 0);
                     str += Encoding.ASCII.GetString(numArray, 0, count);
                 }
-                while (ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
             }
             catch
             {
@@ -1181,9 +1181,9 @@ namespace TSCSDK
             byte[] numArray = new byte[256];
             string str = "";
             byte[] bytes = Encoding.ASCII.GetBytes("~!@");
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "-1";
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
             Thread.Sleep(delay);
             try
             {
@@ -1192,12 +1192,12 @@ namespace TSCSDK
                     int count;
                     do
                     {
-                        count = ethernet.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
+                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
                     }
                     while (count <= 0);
                     str += Encoding.ASCII.GetString(numArray, 0, count);
                 }
-                while (ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
             }
             catch
             {
@@ -1211,9 +1211,9 @@ namespace TSCSDK
             byte[] numArray = new byte[256];
             string str = "";
             byte[] bytes = Encoding.ASCII.GetBytes("~!T");
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "-1";
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
             Thread.Sleep(1000);
             try
             {
@@ -1222,12 +1222,12 @@ namespace TSCSDK
                     int count;
                     do
                     {
-                        count = ethernet.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
+                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
                     }
                     while (count <= 0);
                     str += Encoding.ASCII.GetString(numArray, 0, count);
                 }
-                while (ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
             }
             catch
             {
@@ -1241,9 +1241,9 @@ namespace TSCSDK
             byte[] numArray = new byte[256];
             string str = "";
             byte[] bytes = Encoding.ASCII.GetBytes("~!T");
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "-1";
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
             Thread.Sleep(delay);
             try
             {
@@ -1252,12 +1252,12 @@ namespace TSCSDK
                     int count;
                     do
                     {
-                        count = ethernet.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
+                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
                     }
                     while (count <= 0);
                     str += Encoding.ASCII.GetString(numArray, 0, count);
                 }
-                while (ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
             }
             catch
             {
@@ -1271,9 +1271,9 @@ namespace TSCSDK
             byte[] numArray = new byte[256];
             string str = "";
             byte[] bytes = Encoding.ASCII.GetBytes("~!F");
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "-1";
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
             Thread.Sleep(1000);
             try
             {
@@ -1282,12 +1282,12 @@ namespace TSCSDK
                     int count;
                     do
                     {
-                        count = ethernet.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
+                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
                     }
                     while (count <= 0);
                     str += Encoding.ASCII.GetString(numArray, 0, count);
                 }
-                while (ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
             }
             catch
             {
@@ -1301,9 +1301,9 @@ namespace TSCSDK
             byte[] numArray = new byte[256];
             string str = "";
             byte[] bytes = Encoding.ASCII.GetBytes("~!F");
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "-1";
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
             Thread.Sleep(delay);
             try
             {
@@ -1312,12 +1312,12 @@ namespace TSCSDK
                     int count;
                     do
                     {
-                        count = ethernet.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
+                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
                     }
                     while (count <= 0);
                     str += Encoding.ASCII.GetString(numArray, 0, count);
                 }
-                while (ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
             }
             catch
             {
@@ -1331,9 +1331,9 @@ namespace TSCSDK
             byte[] numArray = new byte[256];
             string str = "";
             byte[] bytes = Encoding.ASCII.GetBytes("~!T");
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "-1";
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
             Thread.Sleep(1000);
             try
             {
@@ -1342,12 +1342,12 @@ namespace TSCSDK
                     int count;
                     do
                     {
-                        count = ethernet.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
+                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
                     }
                     while (count <= 0);
                     str += Encoding.ASCII.GetString(numArray, 0, count);
                 }
-                while (ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
             }
             catch
             {
@@ -1361,9 +1361,9 @@ namespace TSCSDK
             byte[] numArray = new byte[256];
             string str = "";
             byte[] bytes = Encoding.ASCII.GetBytes("~!T");
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "-1";
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
             Thread.Sleep(delay);
             try
             {
@@ -1372,12 +1372,12 @@ namespace TSCSDK
                     int count;
                     do
                     {
-                        count = ethernet.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
+                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
                     }
                     while (count <= 0);
                     str += Encoding.ASCII.GetString(numArray, 0, count);
                 }
-                while (ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
             }
             catch
             {
@@ -1391,9 +1391,9 @@ namespace TSCSDK
             byte[] numArray = new byte[256];
             string str = "";
             byte[] bytes = Encoding.ASCII.GetBytes("OUT _SERIAL$\r\n");
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "-1";
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
             Thread.Sleep(1000);
             try
             {
@@ -1402,12 +1402,12 @@ namespace TSCSDK
                     int count;
                     do
                     {
-                        count = ethernet.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
+                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
                     }
                     while (count <= 0);
                     str += Encoding.ASCII.GetString(numArray, 0, count);
                 }
-                while (ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
             }
             catch
             {
@@ -1421,9 +1421,9 @@ namespace TSCSDK
             byte[] numArray = new byte[256];
             string str = "";
             byte[] bytes = Encoding.ASCII.GetBytes("OUT _SERIAL$\r\n");
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return "-1";
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
             Thread.Sleep(delay);
             try
             {
@@ -1432,12 +1432,12 @@ namespace TSCSDK
                     int count;
                     do
                     {
-                        count = ethernet.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
+                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
                     }
                     while (count <= 0);
                     str += Encoding.ASCII.GetString(numArray, 0, count);
                 }
-                while (ethernet.tempSocket.Poll(5000, SelectMode.SelectRead));
+                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
             }
             catch
             {
@@ -1555,7 +1555,7 @@ namespace TSCSDK
                 ethernet.iBitmapX = 0;
             }
             byte[] bytes = Encoding.UTF8.GetBytes("BITMAP " + (object)ethernet.iBitmapX + "," + (object)ethernet.iBitmapY + "," + (object)(ethernet.iBitmapWidth - ethernet.imgShiftX) + "," + (object)(ethernet.iBitmapHeight - ethernet.iTop) + ",1,");
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
             GC.Collect();
             Encoding.Unicode.GetChars(ethernet.buf);
             for (int iTop = ethernet.iTop; iTop < ethernet.iBitmapHeight; ++iTop)
@@ -1570,13 +1570,13 @@ namespace TSCSDK
                     Marshal.Copy(ethernet.buf, iTop * 300, num8, 5760000 - iTop * 300);
                     byte[] numArray2 = new byte[300];
                     Marshal.Copy(num8, numArray2, 0, 300);
-                    ethernet.tempSocket.Send(numArray2, ethernet.iBitmapWidth, SocketFlags.None);
+                    this.tempSocket.Send(numArray2, ethernet.iBitmapWidth, SocketFlags.None);
                     imgShiftX += ethernet.iBitmapWidth;
                     Marshal.FreeHGlobal(num8);
                     GC.Collect();
                 }
             }
-            ethernet.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
+            this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
             Marshal.Release(bitmap);
             Marshal.Release(compatibleDc);
             Marshal.Release(dc);
@@ -1686,7 +1686,7 @@ namespace TSCSDK
                 ethernet.iBitmapX = 0;
             }
             byte[] bytes = Encoding.UTF8.GetBytes("BITMAP " + (object)ethernet.iBitmapX + "," + (object)ethernet.iBitmapY + "," + (object)(ethernet.iBitmapWidth - ethernet.imgShiftX) + "," + (object)(ethernet.iBitmapHeight - ethernet.iTop) + ",1,");
-            ethernet.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
             GC.Collect();
             Encoding.Unicode.GetChars(ethernet.buf);
             for (int iTop = ethernet.iTop; iTop < ethernet.iBitmapHeight; ++iTop)
@@ -1701,13 +1701,13 @@ namespace TSCSDK
                     Marshal.Copy(ethernet.buf, iTop * 300, num8, 5760000 - iTop * 300);
                     byte[] numArray2 = new byte[300];
                     Marshal.Copy(num8, numArray2, 0, 300);
-                    ethernet.tempSocket.Send(numArray2, ethernet.iBitmapWidth, SocketFlags.None);
+                    this.tempSocket.Send(numArray2, ethernet.iBitmapWidth, SocketFlags.None);
                     imgShiftX += ethernet.iBitmapWidth;
                     Marshal.FreeHGlobal(num8);
                     GC.Collect();
                 }
             }
-            ethernet.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
+            this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
             Marshal.Release(bitmap);
             Marshal.Release(compatibleDc);
             Marshal.Release(dc);
@@ -1789,7 +1789,7 @@ namespace TSCSDK
 
         public string WiFi_Default()
         {
-            if (ethernet.tempSocket == null)
+            if (this.tempSocket == null)
                 return "-1";
             byte[] command = new byte[3]
             {
@@ -1804,7 +1804,7 @@ namespace TSCSDK
 
         public string WiFi_SSID(string SSID)
         {
-            if (ethernet.tempSocket == null)
+            if (this.tempSocket == null)
                 return "-1";
             this.sendcommand("WLAN SSID \"" + SSID + "\"\r\n");
             return "1";
@@ -1812,7 +1812,7 @@ namespace TSCSDK
 
         public string WiFi_WPA(string WPA)
         {
-            if (ethernet.tempSocket == null)
+            if (this.tempSocket == null)
                 return "-1";
             this.sendcommand("WLAN WPA \"" + WPA + "\"\r\n");
             return "1";
@@ -1820,7 +1820,7 @@ namespace TSCSDK
 
         public string WiFi_WEP(int number, string WEP)
         {
-            if (ethernet.tempSocket == null)
+            if (this.tempSocket == null)
                 return "-1";
             this.sendcommand("WLAN WEP " + number.ToString() + ",\"" + WEP + "\"\r\n");
             return "1";
@@ -1828,7 +1828,7 @@ namespace TSCSDK
 
         public string WiFi_DHCP()
         {
-            if (ethernet.tempSocket == null)
+            if (this.tempSocket == null)
                 return "-1";
             this.sendcommand("WLAN DHCP\r\n");
             return "1";
@@ -1836,7 +1836,7 @@ namespace TSCSDK
 
         public string WiFi_Port(int port)
         {
-            if (ethernet.tempSocket == null)
+            if (this.tempSocket == null)
                 return "-1";
             this.sendcommand("WLAN PORT " + port.ToString() + "\r\n");
             return "1";
@@ -1844,7 +1844,7 @@ namespace TSCSDK
 
         public string WiFi_StaticIP(string ip, string mask, string gateway)
         {
-            if (ethernet.tempSocket == null)
+            if (this.tempSocket == null)
                 return "-1";
             this.sendcommand("WLAN IP \"" + ip + "\",\"" + mask + "\",\"" + gateway + "\"\r\n");
             return "1";
@@ -1860,12 +1860,12 @@ namespace TSCSDK
             byte[] buffer = new byte[1024];
             ethernet.byte_to_string = "";
             Thread.Sleep(delay);
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return false;
 label_1:
             try
             {
-                int num = ethernet.tempSocket.Receive(buffer, buffer.Length, SocketFlags.None);
+                int num = this.tempSocket.Receive(buffer, buffer.Length, SocketFlags.None);
                 if (num <= 0)
                     return true;
                 for (int index = 0; index <= num - 1; ++index)
@@ -1882,7 +1882,7 @@ label_1:
         {
             byte[] buffer = new byte[1024];
             ethernet.byte_to_string = "";
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return false;
 label_1:
             try
@@ -1891,7 +1891,7 @@ label_1:
                 do
                 {
                     Thread.Sleep(delay);
-                    num = ethernet.tempSocket.Receive(buffer, buffer.Length, SocketFlags.None);
+                    num = this.tempSocket.Receive(buffer, buffer.Length, SocketFlags.None);
                 }
                 while (num <= 0);
                 for (int index = 0; index <= num - 1; ++index)
@@ -1913,7 +1913,7 @@ label_1:
             byte[] buffer = new byte[1024];
             ethernet.byte_to_string = "";
             Thread.Sleep(delay);
-            if (!ethernet.tempSocket.Connected)
+            if (!this.tempSocket.Connected)
                 return false;
 label_1:
             try
@@ -1921,7 +1921,7 @@ label_1:
                 int num;
                 do
                 {
-                    num = ethernet.tempSocket.Receive(buffer, buffer.Length, SocketFlags.None);
+                    num = this.tempSocket.Receive(buffer, buffer.Length, SocketFlags.None);
                 }
                 while (num <= 0);
                 for (int index = 0; index <= num; ++index)
