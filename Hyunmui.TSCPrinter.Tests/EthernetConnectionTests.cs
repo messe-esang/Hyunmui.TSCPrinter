@@ -349,6 +349,31 @@ namespace Hyunmui.TSCPrinter.Tests
             }
         }
 
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task MetadataQueryFinishesWhenThePeerEndsItsResponse(bool hasResponse)
+        {
+            using var peer = new LoopbackPrinter();
+            var transport = new ethernet();
+            Open(transport, peer.Port);
+            using var client = await peer.Accept();
+            var stream = client.GetStream();
+            if (hasResponse) await stream.WriteAsync(Encoding.ASCII.GetBytes("PRINTER"));
+            client.Client.Shutdown(SocketShutdown.Send);
+            var query = Task.Run(() => transport.printername(0));
+            try
+            {
+                Assert.Equal(hasResponse ? "PRINTER" : "-1", await query.WaitAsync(TimeSpan.FromSeconds(3)));
+                await AssertWire(stream, Encoding.ASCII.GetBytes("~!T"));
+            }
+            finally
+            {
+                transport.closeport();
+                await query;
+            }
+        }
+
         private static Task AssertDownload(TcpClient client, string header) =>
             AssertWire(client, Encoding.ASCII.GetBytes(header).Concat(new byte[] { 0, 127, 255, 13, 10 }).ToArray());
 
@@ -362,11 +387,13 @@ namespace Hyunmui.TSCPrinter.Tests
         private static Task AssertWire(TcpClient client, string expected) =>
             AssertWire(client, Encoding.ASCII.GetBytes(expected));
 
-        private static async Task AssertWire(TcpClient client, byte[] expected)
+        private static Task AssertWire(TcpClient client, byte[] expected) => AssertWire(client.GetStream(), expected);
+
+        private static async Task AssertWire(Stream stream, byte[] expected)
         {
             var received = new byte[expected.Length];
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-            await client.GetStream().ReadExactlyAsync(received, timeout.Token);
+            await stream.ReadExactlyAsync(received, timeout.Token);
             Assert.Equal(expected, received);
         }
 

@@ -40,3 +40,11 @@ EventGate develop에 .NET 10 전환이 반영되어, 공용 main의 `9dff12147d6
 이 배치는 TCP 연결의 소유 범위를 수정한다. 동일 인스턴스에 대한 동시 호출, close 없이 다시 open할 때의 이전 소켓 수명, 연결 실패·취소 및 BeginConnect/EndConnect 처리, 진단 문자열과 GDI raster의 나머지 공유 상태는 후속 배치다. `printersetting_mult`가 번호별 소켓에 쓰고 기본 소켓의 ReadToStream으로 읽는 문제도 별도 수정·테스트가 필요하다. Microsoft의 [BeginConnect 계약](https://learn.microsoft.com/en-us/dotnet/api/system.net.sockets.socket.beginconnect)은 EndConnect로 완료하도록 명시한다. 기존 코드에는 완료 호출이 없으며 이번 상태 분리만으로 이를 해결했다고 간주하지 않는다. USB/Serial/드라이버 연결과 실제 TCP 프린터의 출력·커터·장시간 검증도 별도로 남는다.
 
 영향은 공개 TCP SDK를 사용하는 소비자다. 서로 다른 인스턴스 사이에서 전역 연결을 공유하던 호출자는 같은 인스턴스로 open/send/close를 수행해야 한다. EventGate의 현재 고수준 TSCPrinter wrapper는 USB를 사용하며 TCP를 직접 생성하는 업무 호출은 저장소 검색에서 발견되지 않았다. 외부 소비자와 실장비 검증 전 NuGet 릴리스·main 병합은 수행하지 않는다. 롤백은 공용 커밋 revert 또는 소비자의 포인터를 위 기준 커밋으로 되돌리는 것이다.
+
+### PRN-02A 조회 중복과 EOF 후속 수정
+
+첫 부모 분석 `8ba9e2ce`에서 S2696 24개가 FIXED였으나 신규 중복률 4.46521%로 Gate가 실패했다. `printercodepage(int)`와 mileage/name/file/memory/serial의 기본·지연 overload, 총 11개의 같은 ASCII 요청/수신 루프를 `QueryPrinterText`로 모은다. 명령 문자열, 기본 1초/호출자 지정 지연, 256바이트 버퍼, Poll 5000, SocketException의 `-1` 반환을 유지한다.
+
+기존 루프는 상대가 송신을 종료하면 Receive가 0을 반환해도 반복했다. EOF에서는 종료하고 받은 텍스트가 있으면 반환하며 없으면 `-1`을 반환한다. 응답 없음·응답 후 종료 두 테스트가 기존 구현에서 모두 3초 시간 초과로 실패했음을 확인했다. 테스트의 finally에서 소켓을 닫아 실패한 실행의 루프도 종료했다. 번호별 설정 조회와 BeginConnect 완료 처리 등 앞서 기록한 잔여 문제는 별도 배치다.
+
+수정 후 EOF 두 경우와 기존 명령·응답 테스트를 포함한 공용 전체 65개·EventGate 프린터 98개가 통과했다. EOF 테스트는 half-close 전에 얻은 NetworkStream으로 요청 바이트를 확인한다. TCP 테스트는 총 39개이며, 기존 37개의 명령·반환값 검증도 유지했다.

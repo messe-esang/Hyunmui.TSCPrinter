@@ -1116,334 +1116,53 @@ namespace TSCSDK
             return ethernet.byte_to_string;
         }
 
-        public string printercodepage(int delay)
+        public string printercodepage(int delay) => this.QueryPrinterText("~!I", delay);
+
+        public string printermileage() => this.QueryPrinterText("~!@", 1000);
+
+        public string printermileage(int delay) => this.QueryPrinterText("~!@", delay);
+
+        public string printername() => this.QueryPrinterText("~!T", 1000);
+
+        public string printername(int delay) => this.QueryPrinterText("~!T", delay);
+
+        public string printerfile() => this.QueryPrinterText("~!F", 1000);
+
+        public string printerfile(int delay) => this.QueryPrinterText("~!F", delay);
+
+        public string printermemory() => this.QueryPrinterText("~!T", 1000);
+
+        public string printermemory(int delay) => this.QueryPrinterText("~!T", delay);
+
+        public string printerserial() => this.QueryPrinterText("OUT _SERIAL$\r\n", 1000);
+
+        public string printerserial(int delay) => this.QueryPrinterText("OUT _SERIAL$\r\n", delay);
+
+        private string QueryPrinterText(string command, int delay)
         {
-            byte[] numArray = new byte[256];
-            string str = "";
-            byte[] bytes = Encoding.ASCII.GetBytes("~!I");
             if (!this.tempSocket.Connected)
                 return "-1";
-            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
+            byte[] request = Encoding.ASCII.GetBytes(command);
+            this.tempSocket.Send(request, request.Length, SocketFlags.None);
             Thread.Sleep(delay);
+            byte[] buffer = new byte[256];
+            var response = new StringBuilder();
             try
             {
                 do
                 {
-                    int count;
-                    do
-                    {
-                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
-                    }
-                    while (count <= 0);
-                    str += Encoding.ASCII.GetString(numArray, 0, count);
+                    int count = this.tempSocket.Receive(buffer, buffer.Length, SocketFlags.None);
+                    if (count == 0)
+                        break;
+                    response.Append(Encoding.ASCII.GetString(buffer, 0, count));
                 }
                 while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
             }
-            catch
+            catch (SocketException)
             {
                 return "-1";
             }
-            return str;
-        }
-
-        public string printermileage()
-        {
-            byte[] numArray = new byte[256];
-            string str = "";
-            byte[] bytes = Encoding.ASCII.GetBytes("~!@");
-            if (!this.tempSocket.Connected)
-                return "-1";
-            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-            Thread.Sleep(1000);
-            try
-            {
-                do
-                {
-                    int count;
-                    do
-                    {
-                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
-                    }
-                    while (count <= 0);
-                    str += Encoding.ASCII.GetString(numArray, 0, count);
-                }
-                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
-            }
-            catch
-            {
-                return "-1";
-            }
-            return str;
-        }
-
-        public string printermileage(int delay)
-        {
-            byte[] numArray = new byte[256];
-            string str = "";
-            byte[] bytes = Encoding.ASCII.GetBytes("~!@");
-            if (!this.tempSocket.Connected)
-                return "-1";
-            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-            Thread.Sleep(delay);
-            try
-            {
-                do
-                {
-                    int count;
-                    do
-                    {
-                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
-                    }
-                    while (count <= 0);
-                    str += Encoding.ASCII.GetString(numArray, 0, count);
-                }
-                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
-            }
-            catch
-            {
-                return "-1";
-            }
-            return str;
-        }
-
-        public string printername()
-        {
-            byte[] numArray = new byte[256];
-            string str = "";
-            byte[] bytes = Encoding.ASCII.GetBytes("~!T");
-            if (!this.tempSocket.Connected)
-                return "-1";
-            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-            Thread.Sleep(1000);
-            try
-            {
-                do
-                {
-                    int count;
-                    do
-                    {
-                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
-                    }
-                    while (count <= 0);
-                    str += Encoding.ASCII.GetString(numArray, 0, count);
-                }
-                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
-            }
-            catch
-            {
-                return "-1";
-            }
-            return str;
-        }
-
-        public string printername(int delay)
-        {
-            byte[] numArray = new byte[256];
-            string str = "";
-            byte[] bytes = Encoding.ASCII.GetBytes("~!T");
-            if (!this.tempSocket.Connected)
-                return "-1";
-            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-            Thread.Sleep(delay);
-            try
-            {
-                do
-                {
-                    int count;
-                    do
-                    {
-                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
-                    }
-                    while (count <= 0);
-                    str += Encoding.ASCII.GetString(numArray, 0, count);
-                }
-                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
-            }
-            catch
-            {
-                return "-1";
-            }
-            return str;
-        }
-
-        public string printerfile()
-        {
-            byte[] numArray = new byte[256];
-            string str = "";
-            byte[] bytes = Encoding.ASCII.GetBytes("~!F");
-            if (!this.tempSocket.Connected)
-                return "-1";
-            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-            Thread.Sleep(1000);
-            try
-            {
-                do
-                {
-                    int count;
-                    do
-                    {
-                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
-                    }
-                    while (count <= 0);
-                    str += Encoding.ASCII.GetString(numArray, 0, count);
-                }
-                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
-            }
-            catch
-            {
-                return "-1";
-            }
-            return str;
-        }
-
-        public string printerfile(int delay)
-        {
-            byte[] numArray = new byte[256];
-            string str = "";
-            byte[] bytes = Encoding.ASCII.GetBytes("~!F");
-            if (!this.tempSocket.Connected)
-                return "-1";
-            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-            Thread.Sleep(delay);
-            try
-            {
-                do
-                {
-                    int count;
-                    do
-                    {
-                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
-                    }
-                    while (count <= 0);
-                    str += Encoding.ASCII.GetString(numArray, 0, count);
-                }
-                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
-            }
-            catch
-            {
-                return "-1";
-            }
-            return str;
-        }
-
-        public string printermemory()
-        {
-            byte[] numArray = new byte[256];
-            string str = "";
-            byte[] bytes = Encoding.ASCII.GetBytes("~!T");
-            if (!this.tempSocket.Connected)
-                return "-1";
-            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-            Thread.Sleep(1000);
-            try
-            {
-                do
-                {
-                    int count;
-                    do
-                    {
-                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
-                    }
-                    while (count <= 0);
-                    str += Encoding.ASCII.GetString(numArray, 0, count);
-                }
-                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
-            }
-            catch
-            {
-                return "-1";
-            }
-            return str;
-        }
-
-        public string printermemory(int delay)
-        {
-            byte[] numArray = new byte[256];
-            string str = "";
-            byte[] bytes = Encoding.ASCII.GetBytes("~!T");
-            if (!this.tempSocket.Connected)
-                return "-1";
-            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-            Thread.Sleep(delay);
-            try
-            {
-                do
-                {
-                    int count;
-                    do
-                    {
-                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
-                    }
-                    while (count <= 0);
-                    str += Encoding.ASCII.GetString(numArray, 0, count);
-                }
-                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
-            }
-            catch
-            {
-                return "-1";
-            }
-            return str;
-        }
-
-        public string printerserial()
-        {
-            byte[] numArray = new byte[256];
-            string str = "";
-            byte[] bytes = Encoding.ASCII.GetBytes("OUT _SERIAL$\r\n");
-            if (!this.tempSocket.Connected)
-                return "-1";
-            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-            Thread.Sleep(1000);
-            try
-            {
-                do
-                {
-                    int count;
-                    do
-                    {
-                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
-                    }
-                    while (count <= 0);
-                    str += Encoding.ASCII.GetString(numArray, 0, count);
-                }
-                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
-            }
-            catch
-            {
-                return "-1";
-            }
-            return str;
-        }
-
-        public string printerserial(int delay)
-        {
-            byte[] numArray = new byte[256];
-            string str = "";
-            byte[] bytes = Encoding.ASCII.GetBytes("OUT _SERIAL$\r\n");
-            if (!this.tempSocket.Connected)
-                return "-1";
-            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-            Thread.Sleep(delay);
-            try
-            {
-                do
-                {
-                    int count;
-                    do
-                    {
-                        count = this.tempSocket.Receive(numArray, numArray.Length, SocketFlags.None);
-                    }
-                    while (count <= 0);
-                    str += Encoding.ASCII.GetString(numArray, 0, count);
-                }
-                while (this.tempSocket.Poll(5000, SelectMode.SelectRead));
-            }
-            catch
-            {
-                return "-1";
-            }
-            return str;
+            return response.Length == 0 ? "-1" : response.ToString();
         }
 
         private static void ReceiveCallback(IAsyncResult result)
