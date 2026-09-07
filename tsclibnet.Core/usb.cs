@@ -1820,109 +1820,20 @@ label_1:
 
         public void printphoto(int xpoint, int ypoint, string filename)
         {
-            Bitmap bitmap1 = new Bitmap(filename);
-            Bitmap bitmap2 = new Bitmap(bitmap1.Width, bitmap1.Height);
-            for (int x = 0; x < bitmap1.Width; ++x)
-            {
-                for (int y = 0; y < bitmap1.Height; ++y)
-                {
-                    Color pixel = bitmap1.GetPixel(x, y);
-                    int num = (int)((double)pixel.R * 0.3 + (double)pixel.G * 0.59 + (double)pixel.B * 0.11);
-                    bitmap2.SetPixel(x, y, Color.FromArgb((int)pixel.A, num, num, num));
-                }
-            }
-            Bitmap bitmap3 = bitmap2;
-            Bitmap bitmap4 = new Bitmap(bitmap3.Width, bitmap3.Height);
-            this.sendcommandNOCRLF("BITMAP " + (object)xpoint + "," + (object)ypoint + "," + (object)((bitmap3.Width + 7) / 8) + "," + (object)bitmap3.Height + ", 0,");
-            byte[] command = new byte[(bitmap3.Width + 7) / 8 * bitmap3.Height];
-            for (int index = 0; index < command.Length; ++index)
-                command[index] = byte.MaxValue;
-            for (int y = 0; y < bitmap3.Height; ++y)
-            {
-                for (int x = 0; x < bitmap3.Width; ++x)
-                {
-                    Color pixel = bitmap3.GetPixel(x, y);
-                    int r = (int)pixel.R;
-                    byte g = pixel.G;
-                    byte b = pixel.B;
-                    int num = (int)g;
-                    if ((r + num + (int)b) / 3 < 128)
-                        command[y * ((bitmap3.Width + 7) / 8) + x / 8] ^= (byte)(128 >> x % 8);
-                }
-            }
-            this.sendcommand(command);
-            this.sendcommand(usb.CRLF_byte);
+            BitmapCommand.SendFile(xpoint, ypoint, filename,
+                header => this.sendcommandNOCRLF(header), data => this.sendcommand(data));
         }
 
         public void sendpicture(int xpoint, int ypoint, string filename)
         {
-            Bitmap bitmap1 = new Bitmap(filename);
-            Bitmap bitmap2 = new Bitmap(bitmap1.Width, bitmap1.Height);
-            for (int x = 0; x < bitmap1.Width; ++x)
-            {
-                for (int y = 0; y < bitmap1.Height; ++y)
-                {
-                    Color pixel = bitmap1.GetPixel(x, y);
-                    int num = (int)((double)pixel.R * 0.3 + (double)pixel.G * 0.59 + (double)pixel.B * 0.11);
-                    bitmap2.SetPixel(x, y, Color.FromArgb((int)pixel.A, num, num, num));
-                }
-            }
-            Bitmap bitmap3 = bitmap2;
-            Bitmap bitmap4 = new Bitmap(bitmap3.Width, bitmap3.Height);
-            this.sendcommandNOCRLF("BITMAP " + (object)xpoint + "," + (object)ypoint + "," + (object)((bitmap3.Width + 7) / 8) + "," + (object)bitmap3.Height + ", 0,");
-            byte[] command = new byte[(bitmap3.Width + 7) / 8 * bitmap3.Height];
-            for (int index = 0; index < command.Length; ++index)
-                command[index] = byte.MaxValue;
-            for (int y = 0; y < bitmap3.Height; ++y)
-            {
-                for (int x = 0; x < bitmap3.Width; ++x)
-                {
-                    Color pixel = bitmap3.GetPixel(x, y);
-                    int r = (int)pixel.R;
-                    byte g = pixel.G;
-                    byte b = pixel.B;
-                    int num = (int)g;
-                    if ((r + num + (int)b) / 3 < 128)
-                        command[y * ((bitmap3.Width + 7) / 8) + x / 8] ^= (byte)(128 >> x % 8);
-                }
-            }
-            this.sendcommand(command);
-            this.sendcommand(usb.CRLF_byte);
+            BitmapCommand.SendFile(xpoint, ypoint, filename,
+                header => this.sendcommandNOCRLF(header), data => this.sendcommand(data));
         }
 
         public void sendpicture(int xpoint, int ypoint, Bitmap original_picture)
         {
-            Bitmap bitmap1 = new Bitmap(original_picture.Width, original_picture.Height);
-            for (int x = 0; x < original_picture.Width; ++x)
-            {
-                for (int y = 0; y < original_picture.Height; ++y)
-                {
-                    Color pixel = original_picture.GetPixel(x, y);
-                    int num = (int)((double)pixel.R * 0.3 + (double)pixel.G * 0.59 + (double)pixel.B * 0.11);
-                    bitmap1.SetPixel(x, y, Color.FromArgb((int)pixel.A, num, num, num));
-                }
-            }
-            Bitmap bitmap2 = bitmap1;
-            Bitmap bitmap3 = new Bitmap(bitmap2.Width, bitmap2.Height);
-            this.sendcommandNOCRLF("BITMAP " + (object)xpoint + "," + (object)ypoint + "," + (object)((bitmap2.Width + 7) / 8) + "," + (object)bitmap2.Height + ", 0,");
-            byte[] command = new byte[(bitmap2.Width + 7) / 8 * bitmap2.Height];
-            for (int index = 0; index < command.Length; ++index)
-                command[index] = byte.MaxValue;
-            for (int y = 0; y < bitmap2.Height; ++y)
-            {
-                for (int x = 0; x < bitmap2.Width; ++x)
-                {
-                    Color pixel = bitmap2.GetPixel(x, y);
-                    int r = (int)pixel.R;
-                    byte g = pixel.G;
-                    byte b = pixel.B;
-                    int num = (int)g;
-                    if ((r + num + (int)b) / 3 < 128)
-                        command[y * ((bitmap2.Width + 7) / 8) + x / 8] ^= (byte)(128 >> x % 8);
-                }
-            }
-            this.sendcommand(command);
-            this.sendcommand(usb.CRLF_byte);
+            BitmapCommand.Send(xpoint, ypoint, original_picture,
+                header => this.sendcommandNOCRLF(header), data => this.sendcommand(data));
         }
 
         public int sendfile(string path)
