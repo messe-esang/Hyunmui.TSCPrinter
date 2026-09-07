@@ -53,7 +53,6 @@ namespace TSCSDK
         private const int BUFFER_HEIGHT = 2400;
         private int sleep_time;
         private int file_total_length;
-        private static string byte_to_string = "";
         private static string read_string = "";
         private static string[] diag_array = new string[1024];
         private static byte[] load_buffer = new byte[1024];
@@ -378,14 +377,9 @@ namespace TSCSDK
 
         public string sendcommand_getstring(string command)
         {
-            byte[] numArray = new byte[256];
-            byte[] bytes1 = Encoding.ASCII.GetBytes(command);
-            Encoding.ASCII.GetBytes(ethernet.CRLF);
-            byte[] bytes2 = Encoding.Default.GetBytes("OUT \"ENDLINE\"\r\n");
-            this.sendcommand(bytes1);
-            this.sendcommand(bytes2);
-            this.ReadToStream(1000, "ENDLINE\r\n");
-            return ethernet.byte_to_string;
+            this.sendcommand(Encoding.ASCII.GetBytes(command));
+            this.sendcommand(Encoding.Default.GetBytes("OUT \"ENDLINE\"\r\n"));
+            return ReadResponse(this.tempSocket, 1000, 0, "ENDLINE\r\n");
         }
 
         public int sendcommand_mult(int portnumber, string command)
@@ -952,90 +946,39 @@ namespace TSCSDK
             return buffer1[0] == (byte)128 ? "80" : "other error";
         }
 
-        public string printersetting(string app, string sec, string key, int delay)
-        {
-            string s = "OUT GETSETTING$(\"" + app + "\",\"" + sec + "\",\"" + key + "\")";
-            byte[] bytes1 = Encoding.Default.GetBytes("OUT CHR$(06)");
-            byte[] bytes2 = Encoding.ASCII.GetBytes(s);
-            byte judgement = 6;
-            if (!this.tempSocket.Connected)
-                return "error";
-            this.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
-            this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
-            this.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
-            this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
-            if (this.ReadToStream(delay, judgement))
-                ;
-            return ethernet.byte_to_string;
-        }
+        public string printersetting(string app, string sec, string key, int delay) =>
+            QueryPrinterSetting(this.tempSocket, app, sec, key, 0, delay);
 
-        public string printersetting(string app, string sec, string key, int delay1, int delay2)
-        {
-            string s = "OUT GETSETTING$(\"" + app + "\",\"" + sec + "\",\"" + key + "\")";
-            byte[] bytes1 = Encoding.Default.GetBytes("OUT CHR$(06)");
-            byte[] bytes2 = Encoding.ASCII.GetBytes(s);
-            byte judgement = 6;
-            if (!this.tempSocket.Connected)
-                return "error";
-            this.tempSocket.Send(bytes2, bytes2.Length, SocketFlags.None);
-            this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
-            this.tempSocket.Send(bytes1, bytes1.Length, SocketFlags.None);
-            this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
-            Thread.Sleep(delay1);
-            if (this.ReadToStream(delay2, judgement))
-                ;
-            return ethernet.byte_to_string;
-        }
+        public string printersetting(string app, string sec, string key, int delay1, int delay2) =>
+            QueryPrinterSetting(this.tempSocket, app, sec, key, delay1, delay2);
 
         public string printersetting_mult(int portnumber, string app, string sec, string key)
         {
-            byte[] numArray1 = new byte[256];
-            byte[] bytes = Encoding.ASCII.GetBytes("OUT GETSETTING$(\"" + app + "\",\"" + sec + "\",\"" + key + "\")");
-            byte judgement = 6;
+            Socket socket;
             switch (portnumber)
             {
-                case 1:
-                    byte[] numArray2 = new byte[256];
-                    if (!this.tempSocket1.Connected)
-                        return "error";
-                    this.tempSocket1.Send(bytes, bytes.Length, SocketFlags.None);
-                    if (this.ReadToStream(1000, judgement))
-                        break;
-                    break;
-                case 2:
-                    byte[] numArray3 = new byte[256];
-                    if (!this.tempSocket2.Connected)
-                        return "error";
-                    this.tempSocket2.Send(bytes, bytes.Length, SocketFlags.None);
-                    if (this.ReadToStream(1000, judgement))
-                        break;
-                    break;
-                case 3:
-                    byte[] numArray4 = new byte[256];
-                    if (!this.tempSocket3.Connected)
-                        return "error";
-                    this.tempSocket3.Send(bytes, bytes.Length, SocketFlags.None);
-                    if (this.ReadToStream(1000, judgement))
-                        break;
-                    break;
-                case 4:
-                    byte[] numArray5 = new byte[256];
-                    if (!this.tempSocket4.Connected)
-                        return "error";
-                    this.tempSocket4.Send(bytes, bytes.Length, SocketFlags.None);
-                    if (this.ReadToStream(1000, judgement))
-                        break;
-                    break;
-                case 5:
-                    byte[] numArray6 = new byte[256];
-                    if (!this.tempSocket5.Connected)
-                        return "error";
-                    this.tempSocket5.Send(bytes, bytes.Length, SocketFlags.None);
-                    if (this.ReadToStream(1000, judgement))
-                        break;
-                    break;
+                case 1: socket = this.tempSocket1; break;
+                case 2: socket = this.tempSocket2; break;
+                case 3: socket = this.tempSocket3; break;
+                case 4: socket = this.tempSocket4; break;
+                case 5: socket = this.tempSocket5; break;
+                default: return "error";
             }
-            return ethernet.byte_to_string;
+            return QueryPrinterSetting(socket, app, sec, key, 0, 1000);
+        }
+
+        private static string QueryPrinterSetting(Socket socket, string app, string sec, string key, int delay1, int delay2)
+        {
+            if (socket == null || !socket.Connected)
+                return "error";
+            byte[] request = Encoding.ASCII.GetBytes("OUT GETSETTING$(\"" + app + "\",\"" + sec + "\",\"" + key + "\")");
+            byte[] acknowledgement = Encoding.Default.GetBytes("OUT CHR$(06)");
+            socket.Send(request, request.Length, SocketFlags.None);
+            socket.Send(CRLF_byte, CRLF_byte.Length, SocketFlags.None);
+            socket.Send(acknowledgement, acknowledgement.Length, SocketFlags.None);
+            socket.Send(CRLF_byte, CRLF_byte.Length, SocketFlags.None);
+            Thread.Sleep(delay1);
+            return ReadResponse(socket, 0, delay2, "\u0006");
         }
 
         public string printerfullstatus()
@@ -1110,10 +1053,8 @@ namespace TSCSDK
 
         public string printercodepage()
         {
-            byte[] numArray = new byte[256];
             this.sendcommand(Encoding.ASCII.GetBytes("~!I"));
-            this.ReadToStream(200);
-            return ethernet.byte_to_string;
+            return ReadResponse(this.tempSocket, 200, 0, null);
         }
 
         public string printercodepage(int delay) => this.QueryPrinterText("~!I", delay);
@@ -1574,90 +1515,54 @@ namespace TSCSDK
             this.sendpicture(x_axis, y_axis, bitmap_file);
         }
 
-        private bool ReadToStream(int delay)
+        private static string ReadResponse(Socket socket, int initialDelay, int receiveDelay, string terminator)
         {
-            byte[] buffer = new byte[1024];
-            ethernet.byte_to_string = "";
-            Thread.Sleep(delay);
-            if (!this.tempSocket.Connected)
-                return false;
-label_1:
+            var response = new StringBuilder();
+            Thread.Sleep(initialDelay);
+            if (!socket.Connected || receiveDelay < -1)
+                return response.ToString();
+            var buffer = new byte[1024];
             try
             {
-                int num = this.tempSocket.Receive(buffer, buffer.Length, SocketFlags.None);
-                if (num <= 0)
-                    return true;
-                for (int index = 0; index <= num - 1; ++index)
-                    ethernet.byte_to_string += Convert.ToChar(buffer[index]).ToString();
-                goto label_1;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        private bool ReadToStream(int delay, byte judgement)
-        {
-            byte[] buffer = new byte[1024];
-            ethernet.byte_to_string = "";
-            if (!this.tempSocket.Connected)
-                return false;
-label_1:
-            try
-            {
-                int num;
-                do
+                while (true)
                 {
-                    Thread.Sleep(delay);
-                    num = this.tempSocket.Receive(buffer, buffer.Length, SocketFlags.None);
-                }
-                while (num <= 0);
-                for (int index = 0; index <= num - 1; ++index)
-                {
-                    if ((int)buffer[index] == (int)judgement)
-                        return true;
-                    ethernet.byte_to_string += Convert.ToChar(buffer[index]).ToString();
-                }
-                goto label_1;
-            }
-            catch
-            {
-                return false;
-            }
-        }
-
-        private bool ReadToStream(int delay, string judgement)
-        {
-            byte[] buffer = new byte[1024];
-            ethernet.byte_to_string = "";
-            Thread.Sleep(delay);
-            if (!this.tempSocket.Connected)
-                return false;
-label_1:
-            try
-            {
-                int num;
-                do
-                {
-                    num = this.tempSocket.Receive(buffer, buffer.Length, SocketFlags.None);
-                }
-                while (num <= 0);
-                for (int index = 0; index <= num; ++index)
-                {
-                    if (ethernet.byte_to_string.Contains(judgement))
+                    Thread.Sleep(receiveDelay);
+                    int count = socket.Receive(buffer, buffer.Length, SocketFlags.None);
+                    if (count == 0)
+                        break;
+                    for (int index = 0; index < count; ++index)
                     {
-                        ethernet.byte_to_string = ethernet.byte_to_string.Replace(judgement, "");
-                        return true;
+                        response.Append((char)buffer[index]);
+                        if (terminator != null && HasResponseTerminator(response, terminator))
+                        {
+                            response.Length -= terminator.Length;
+                            return response.ToString();
+                        }
                     }
-                    ethernet.byte_to_string += Convert.ToChar(buffer[index]).ToString();
                 }
-                goto label_1;
             }
-            catch
+            catch (SocketException)
             {
-                return false;
+                // Preserve partial responses when the connection fails or its receive timeout expires.
             }
+            catch (ObjectDisposedException)
+            {
+                // Closing a connection while it is being read ends that request.
+            }
+            return response.ToString();
+        }
+
+        private static bool HasResponseTerminator(StringBuilder response, string terminator)
+        {
+            int offset = response.Length - terminator.Length;
+            if (offset < 0)
+                return false;
+            for (int index = 0; index < terminator.Length; ++index)
+            {
+                if (response[offset + index] != terminator[index])
+                    return false;
+            }
+            return true;
         }
 
         private byte[] bit_array2byte_array(byte[] data)

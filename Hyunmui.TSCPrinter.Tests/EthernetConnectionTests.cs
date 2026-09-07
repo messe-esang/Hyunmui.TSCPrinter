@@ -374,6 +374,209 @@ namespace Hyunmui.TSCPrinter.Tests
             }
         }
 
+        [Theory]
+        [Trait("Batch", "PRN02B")]
+        [InlineData(1, false)]
+        [InlineData(2, false)]
+        [InlineData(3, false)]
+        [InlineData(4, false)]
+        [InlineData(5, false)]
+        [InlineData(1, true)]
+        [InlineData(2, true)]
+        [InlineData(3, true)]
+        [InlineData(4, true)]
+        [InlineData(5, true)]
+        public async Task NumberedSettingsUseTheirOwnResponseAndCompleteRequestFrame(int slot, bool defaultConnected)
+        {
+            using var peer = new LoopbackPrinter();
+            using var defaultPeer = new LoopbackPrinter();
+            var transport = new ethernet();
+            if (defaultConnected) Open(transport, defaultPeer.Port);
+            using var defaultClient = defaultConnected ? await defaultPeer.Accept() : null;
+            Assert.Equal(1, transport.openport_mult(slot, "127.0.0.1", peer.Port, 200));
+            using var client = await peer.Accept();
+            try
+            {
+                await client.GetStream().WriteAsync(Encoding.ASCII.GetBytes("RIGHT\x06"));
+                if (defaultClient != null)
+                    await defaultClient.GetStream().WriteAsync(Encoding.ASCII.GetBytes("DEFAULT\x06"));
+                var query = Task.Run(() => transport.printersetting_mult(slot, "APP", "SEC", "KEY"));
+                Assert.Equal("RIGHT", await query.WaitAsync(TimeSpan.FromSeconds(4)));
+                await AssertWire(client, SettingsFrame);
+                if (defaultClient != null)
+                {
+                    Assert.Equal("DEFAULT", transport.printersetting("APP", "SEC", "KEY", 0));
+                    await AssertWire(defaultClient, SettingsFrame);
+                }
+            }
+            finally
+            {
+                transport.closeport_mult(slot, 0);
+                if (defaultConnected) transport.closeport();
+            }
+        }
+
+        [Theory]
+        [Trait("Batch", "PRN02B")]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(5)]
+        [InlineData(6)]
+        public void UnavailableSettingSlotsReturnAnErrorInsteadOfAnotherResponse(int slot)
+        {
+            Assert.Equal("error", new ethernet().printersetting_mult(slot, "APP", "SEC", "KEY"));
+        }
+
+        [Theory]
+        [Trait("Batch", "PRN02B")]
+        [InlineData("settings", false)]
+        [InlineData("settings", true)]
+        [InlineData("diagnostic", false)]
+        [InlineData("diagnostic", true)]
+        [InlineData("codepage", false)]
+        [InlineData("codepage", true)]
+        public async Task ResponseQueriesFinishAtEofAndPreserveEveryReceivedByte(string operation, bool hasResponse)
+        {
+            using var peer = new LoopbackPrinter();
+            var transport = new ethernet();
+            Open(transport, peer.Port);
+            using var client = await peer.Accept();
+            var stream = client.GetStream();
+            var bytes = hasResponse ? new byte[] { 0, 0x80, 0xff, 65 } : Array.Empty<byte>();
+            if (hasResponse) await stream.WriteAsync(bytes);
+            client.Client.Shutdown(SocketShutdown.Send);
+            var query = Task.Run(() => InvokeResponseQuery(transport, operation));
+            try
+            {
+                var expected = new string(bytes.Select(value => (char)value).ToArray());
+                Assert.Equal(expected, await query.WaitAsync(TimeSpan.FromSeconds(3)));
+                await AssertWire(stream, Encoding.ASCII.GetBytes(ResponseFrame(operation)));
+            }
+            finally
+            {
+                transport.closeport();
+                await query;
+            }
+        }
+
+        [Theory]
+        [Trait("Batch", "PRN02B")]
+        [InlineData("settings", false)]
+        [InlineData("settings", true)]
+        [InlineData("diagnostic", false)]
+        [InlineData("diagnostic", true)]
+        [InlineData("codepage", false)]
+        [InlineData("codepage", true)]
+        public async Task ResponseTimeoutReturnsOnlyBytesReceivedForThatRequest(string operation, bool hasResponse)
+        {
+            using var peer = new LoopbackPrinter();
+            var transport = new ethernet();
+            Open(transport, peer.Port);
+            using var client = await peer.Accept();
+            var bytes = hasResponse ? new byte[] { 0, 0x80, 0xff, 65 } : Array.Empty<byte>();
+            if (hasResponse) await client.GetStream().WriteAsync(bytes);
+            var query = Task.Run(() => InvokeResponseQuery(transport, operation));
+            try
+            {
+                var expected = new string(bytes.Select(value => (char)value).ToArray());
+                Assert.Equal(expected, await query.WaitAsync(TimeSpan.FromSeconds(5)));
+                await AssertWire(client, ResponseFrame(operation));
+            }
+            finally
+            {
+                transport.closeport();
+                await query;
+            }
+        }
+
+        [Theory]
+        [Trait("Batch", "PRN02B")]
+        [InlineData(0)]
+        [InlineData(1)]
+        [InlineData(1015)]
+        [InlineData(1016)]
+        [InlineData(1023)]
+        [InlineData(1024)]
+        [InlineData(1025)]
+        [InlineData(2048)]
+        public async Task DiagnosticTerminatorSurvivesReceiveBoundariesWithoutContaminatingNextResponse(int payloadLength)
+        {
+            using var peer = new LoopbackPrinter();
+            var transport = new ethernet();
+            Open(transport, peer.Port);
+            using var client = await peer.Accept();
+            var payload = new string('x', payloadLength);
+            try
+            {
+                await client.GetStream().WriteAsync(Encoding.ASCII.GetBytes(payload + "ENDLINE\r\n"));
+                var query = Task.Run(() => transport.sendcommand_getstring("DIAGNOSTIC REPORT"));
+                Assert.Equal(payload, await query.WaitAsync(TimeSpan.FromSeconds(4)));
+                await AssertWire(client, ResponseFrame("diagnostic"));
+                await client.GetStream().WriteAsync(Encoding.ASCII.GetBytes("NEXT\x06"));
+                Assert.Equal("NEXT", transport.printersetting("APP", "SEC", "KEY", 0));
+                await AssertWire(client, SettingsFrame);
+            }
+            finally { transport.closeport(); }
+        }
+
+        [Theory]
+        [Trait("Batch", "PRN02B")]
+        [InlineData(false)]
+        [InlineData(true)]
+        public async Task ConcurrentResponseRequestsKeepTheirOwnText(bool sameInstance)
+        {
+            using var firstPeer = new LoopbackPrinter();
+            using var secondPeer = new LoopbackPrinter();
+            var first = new ethernet();
+            var second = sameInstance ? first : new ethernet();
+            Open(first, firstPeer.Port);
+            if (sameInstance) Assert.Equal(1, second.openport_mult(1, "127.0.0.1", secondPeer.Port, 200));
+            else Open(second, secondPeer.Port);
+            using var firstClient = await firstPeer.Accept();
+            using var secondClient = await secondPeer.Accept();
+            var firstQuery = Task.Run(() => first.printersetting("APP", "SEC", "KEY", 0));
+            Task<string>? secondQuery = null;
+            try
+            {
+                await AssertWire(firstClient, SettingsFrame);
+                await firstClient.GetStream().WriteAsync(Encoding.ASCII.GetBytes("FIRST"));
+                secondQuery = Task.Run(() => sameInstance
+                    ? second.printersetting_mult(1, "APP", "SEC", "KEY")
+                    : second.printersetting("APP", "SEC", "KEY", 0));
+                await secondClient.GetStream().WriteAsync(Encoding.ASCII.GetBytes("SECOND\x06"));
+                Assert.Equal("SECOND", await secondQuery.WaitAsync(TimeSpan.FromSeconds(4)));
+                await AssertWire(secondClient, SettingsFrame);
+                await firstClient.GetStream().WriteAsync(new byte[] { 6 });
+                Assert.Equal("FIRST", await firstQuery.WaitAsync(TimeSpan.FromSeconds(4)));
+            }
+            finally
+            {
+                first.closeport();
+                if (sameInstance) second.closeport_mult(1, 0);
+                else second.closeport();
+                await firstQuery;
+                if (secondQuery != null) await secondQuery;
+            }
+        }
+
+        private const string SettingsFrame = "OUT GETSETTING$(\"APP\",\"SEC\",\"KEY\")\r\nOUT CHR$(06)\r\n";
+
+        private static string InvokeResponseQuery(ethernet transport, string operation) => operation switch
+        {
+            "settings" => transport.printersetting("APP", "SEC", "KEY", 0),
+            "diagnostic" => transport.sendcommand_getstring("DIAGNOSTIC REPORT"),
+            "codepage" => transport.printercodepage(),
+            _ => throw new ArgumentOutOfRangeException(nameof(operation))
+        };
+
+        private static string ResponseFrame(string operation) => operation switch
+        {
+            "settings" => SettingsFrame,
+            "diagnostic" => "DIAGNOSTIC REPORT\r\nOUT \"ENDLINE\"\r\n\r\n",
+            "codepage" => "~!I\r\n",
+            _ => throw new ArgumentOutOfRangeException(nameof(operation))
+        };
+
         private static Task AssertDownload(TcpClient client, string header) =>
             AssertWire(client, Encoding.ASCII.GetBytes(header).Concat(new byte[] { 0, 127, 255, 13, 10 }).ToArray());
 
