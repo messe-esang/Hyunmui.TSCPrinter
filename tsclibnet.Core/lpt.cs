@@ -30,7 +30,7 @@ namespace TSCSDK
         private FileStream lptstream;
         private readonly IWindowsFontGdi fontGdi;
 
-        public lpt() : this(null, new ethernet.EthernetFontGdi()) { }
+        public lpt() : this(null, new WindowsFontGdi()) { }
 
         internal lpt(FileStream stream, IWindowsFontGdi native)
         {

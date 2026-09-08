@@ -38,8 +38,9 @@ namespace TSCSDK
             if (width < 0 || height < 0 || width > CanvasSize || height > CanvasSize)
                 throw new ArgumentOutOfRangeException(nameof(size), "Measured font bitmap exceeds the 2400 by 2400 canvas.");
 
-            var drawX = request.Rotation == 0 || request.Rotation == 90 ? 0
-                : request.Rotation == 180 ? size.cx : size.cy;
+            var drawX = 0;
+            if (request.Rotation == 180) drawX = size.cx;
+            else if (request.Rotation != 0 && request.Rotation != 90) drawX = size.cy;
             return new WindowsFontGeometry
             {
                 DrawX = drawX,
@@ -76,7 +77,7 @@ namespace TSCSDK
     {
         internal static void Send(WindowsFontRequest request, IWindowsFontGdi native, Func<byte[], int, int, int> write)
         {
-            if (request.Content == null) throw new ArgumentNullException(nameof(request.Content));
+            if (request.Content == null) throw new ArgumentNullException(nameof(request), "The font request must provide Content.");
             if (request.Content.Length == 0) return;
             var packet = WindowsFontRenderer.Render(request, native);
             var offset = 0;

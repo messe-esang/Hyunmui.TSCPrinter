@@ -662,7 +662,7 @@ label_1:
         private readonly IWindowsFontGdi fontGdi;
         private readonly Func<Action<byte[], int, int>> captureFontWriter;
 
-        public comport() : this(new ethernet.EthernetFontGdi(), CaptureSerialFontWriter)
+        public comport() : this(new WindowsFontGdi(), CaptureSerialFontWriter)
         {
         }
 

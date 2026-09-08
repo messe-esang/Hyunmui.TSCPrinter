@@ -16,20 +16,34 @@ namespace Hyunmui.TSCPrinter.Tests
 
     [Collection("Windows font GDI")]
     [Trait("Category", "WindowsGdi")]
-    public class WindowsFontNativeTests
+    public partial class WindowsFontNativeTests
     {
-        [DllImport("user32.dll")]
-        private static extern uint GetGuiResources(IntPtr process, uint flags);
+        [LibraryImport("user32.dll", SetLastError = true)]
+        private static partial uint GetGuiResources(IntPtr process, uint flags);
+
+        private static uint GdiHandleCount(IntPtr process)
+        {
+            var count = GetGuiResources(process, 0);
+            var error = Marshal.GetLastPInvokeError();
+            Assert.True(count > 0 || error == 0, $"GetGuiResources failed with Win32 error {error}.");
+            return count;
+        }
 
         private static byte[] Render(int rotation, bool unicode, int x = 200, int y = 200)
         {
             var result = new List<byte>();
             var request = new WindowsFontRequest
             {
-                X = x, Y = y, Height = 24, Rotation = rotation, Style = 0,
-                FaceName = "Malgun Gothic", Content = unicode ? "가나다 A123" : "Font ABC 123", Unicode = unicode
+                X = x,
+                Y = y,
+                Height = 24,
+                Rotation = rotation,
+                Style = 0,
+                FaceName = "Malgun Gothic",
+                Content = unicode ? "가나다 A123" : "Font ABC 123",
+                Unicode = unicode
             };
-            WindowsFontCommand.Send(request, new ethernet.EthernetFontGdi(), (data, offset, count) =>
+            WindowsFontCommand.Send(request, new WindowsFontGdi(), (data, offset, count) =>
             {
                 result.AddRange(data.Skip(offset).Take(count));
                 return count;
@@ -71,8 +85,7 @@ namespace Hyunmui.TSCPrinter.Tests
         {
             for (var index = 0; index < 8; index++) Render(index % 4 * 90, true);
             using var process = Process.GetCurrentProcess();
-            var before = GetGuiResources(process.Handle, 0);
-            Assert.True(before > 0);
+            var before = GdiHandleCount(process.Handle);
             var expected = Render(0, true);
             for (var index = 0; index < 32; index++)
             {
@@ -80,7 +93,7 @@ namespace Hyunmui.TSCPrinter.Tests
                 Render(0, false, -9, -2);
                 Assert.Equal(expected, Render(0, true));
             }
-            var after = GetGuiResources(process.Handle, 0);
+            var after = GdiHandleCount(process.Handle);
             Assert.InRange((long)after - before, -8, 8);
         }
 

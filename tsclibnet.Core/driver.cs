@@ -49,7 +49,7 @@ namespace TSCSDK
         private readonly Func<IntPtr> fontPrinterHandle;
         private readonly FontPrinterWrite fontPrinterWrite;
 
-        public driver() : this(new ethernet.EthernetFontGdi(), () => hPrinter, WritePrinter) { }
+        public driver() : this(new WindowsFontGdi(), () => hPrinter, WritePrinter) { }
 
         internal driver(IWindowsFontGdi native, Func<IntPtr> printerHandle, FontPrinterWrite write)
         {

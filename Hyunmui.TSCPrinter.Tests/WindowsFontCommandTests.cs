@@ -110,7 +110,9 @@ namespace Hyunmui.TSCPrinter.Tests
             WindowsFontCommand.Send(request, native, (_, _, _) => throw new Exception("No writes expected"));
             Assert.Empty(native.Calls);
             request.Content = null;
-            Assert.Throws<ArgumentNullException>(() => WindowsFontCommand.Send(request, native, (_, _, _) => 0));
+            var error = Assert.Throws<ArgumentNullException>(() => WindowsFontCommand.Send(request, native, (_, _, _) => 0));
+            Assert.Equal("request", error.ParamName);
+            Assert.Contains("Content", error.Message);
             Assert.Empty(native.Calls);
         }
 
