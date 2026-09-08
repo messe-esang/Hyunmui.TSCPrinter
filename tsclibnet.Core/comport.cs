@@ -29,15 +29,6 @@ namespace TSCSDK
       (byte) 13,
       (byte) 10
         };
-        private static int iTop = 0;
-        private static int iBitmapWidth;
-        private static int iBitmapHeight;
-        private static int iBitmapX;
-        private static int iBitmapY;
-        private static int TextOut_X_start;
-        private static int TextOut_Y_start;
-        private static byte[] buf = new byte[5760000];
-        private static int imgShiftX = 0;
         private const int OUT_DEFAULT_PRECIS = 0;
         private const int CLIP_DEFAULT_PRECIS = 0;
         private const int BUFFER_WIDTH = 2400;
@@ -49,28 +40,8 @@ namespace TSCSDK
         [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr CreateFontIndirect([MarshalAs(UnmanagedType.LPStruct), In] comport.LOGFONT lplf);
 
-        [DllImport("gdi32.dll", SetLastError = true)]
-        private static extern IntPtr CreateCompatibleDC([In] IntPtr hdc);
-
-        [DllImport("gdi32.dll")]
-        private static extern IntPtr CreateBitmap(
-          int nWidth,
-          int nHeight,
-          uint cPlanes,
-          uint cBitsPerPel,
-          IntPtr lpvBits);
-
         [DllImport("gdi32.dll")]
         public static extern IntPtr SelectObject([In] IntPtr hdc, [In] IntPtr hgdiobj);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr GetDC(IntPtr hWnd);
-
-        [DllImport("gdi32.dll")]
-        private static extern uint SetTextColor(IntPtr hdc, int crColor);
-
-        [DllImport("gdi32.dll")]
-        private static extern uint SetBkColor(IntPtr hdc, int crColor);
 
         [DllImport("gdi32.dll")]
         private static extern bool Rectangle(
@@ -80,48 +51,12 @@ namespace TSCSDK
           int nRightRect,
           int nBottomRect);
 
-        [DllImport("user32.dll")]
-        private static extern int FillRect(IntPtr hDC, [In] ref comport.RECT lprc, IntPtr hbr);
-
-        [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
-        private static extern bool TextOut(
-          IntPtr hdc,
-          int nXStart,
-          int nYStart,
-          string lpString,
-          int cbString);
-
-        [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
-        private static extern bool TextOutW(
-          IntPtr hdc,
-          int nXStart,
-          int nYStart,
-          string lpWString,
-          int cbString);
-
-        [DllImport("gdi32.dll")]
-        private static extern int GetBitmapBits(IntPtr hbmp, int cbBuffer, [Out] byte[] lpvBits);
-
         [DllImport("gdi32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool DeleteObject([In] IntPtr hObject);
 
         [DllImport("gdi32.dll")]
         public static extern bool DeleteDC([In] IntPtr hdc);
-
-        [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
-        private static extern bool GetTextExtentPoint32(
-          IntPtr hdc,
-          string lpString,
-          int cbString,
-          out comport.SIZE lpSize);
-
-        [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
-        private static extern bool GetTextExtentPoint32W(
-          IntPtr hdc,
-          string lpWString,
-          int cbString,
-          out comport.SIZE lpSize);
 
         public bool openport(
           string portnumber,
@@ -724,6 +659,26 @@ label_1:
             comport._serialPort.Write(buffer, 0, buffer.Length);
         }
 
+        private readonly IWindowsFontGdi fontGdi;
+        private readonly Func<Action<byte[], int, int>> captureFontWriter;
+
+        public comport() : this(new ethernet.EthernetFontGdi(), CaptureSerialFontWriter)
+        {
+        }
+
+        internal comport(IWindowsFontGdi native, Func<Action<byte[], int, int>> captureWriter)
+        {
+            fontGdi = native;
+            captureFontWriter = captureWriter;
+        }
+
+        private static Action<byte[], int, int> CaptureSerialFontWriter()
+        {
+            // Capture at font-call time, not construction; the public port lifecycle remains shared.
+            var port = _serialPort;
+            return (packet, offset, count) => port.Write(packet, offset, count);
+        }
+
         public void windowsfont(
           int x,
           int y,
@@ -734,125 +689,11 @@ label_1:
           string szFaceName,
           string content)
         {
-            comport.LOGFONT lplf = new comport.LOGFONT();
-            comport.SIZE lpSize = new comport.SIZE();
-            lplf.lfWidth = 0;
-            lplf.lfEscapement = 0;
-            lplf.lfOrientation = 0;
-            lplf.lfCharSet = (byte)1;
-            lplf.lfOutPrecision = (byte)0;
-            lplf.lfClipPrecision = (byte)0;
-            lplf.lfQuality = (byte)1;
-            lplf.lfPitchAndFamily = (byte)26;
-            lplf.lfFaceName = szFaceName;
-            lplf.lfHeight = fontheight;
-            lplf.lfItalic = (byte)0;
-            lplf.lfUnderline = (byte)0;
-            lplf.lfStrikeOut = (byte)0;
-            lplf.lfWeight = fontstyle < 2 ? 400 : 700;
-            lplf.lfEscapement = rotation * 10;
-            IntPtr dc = comport.GetDC(IntPtr.Zero);
-            IntPtr compatibleDc = comport.CreateCompatibleDC(dc);
-            IntPtr bitmap = comport.CreateBitmap(2400, 2400, 1U, 1U, IntPtr.Zero);
-            comport.SelectObject(compatibleDc, bitmap);
-            IntPtr fontIndirect = comport.CreateFontIndirect(lplf);
-            IntPtr hgdiobj = comport.SelectObject(compatibleDc, fontIndirect);
-            comport.GetTextExtentPoint32(compatibleDc, content, content.Length, out lpSize);
-            int num1 = (int)comport.SetTextColor(compatibleDc, ColorTranslator.ToWin32(Color.Black));
-            int num2 = (int)comport.SetBkColor(compatibleDc, ColorTranslator.ToWin32(Color.White));
-            comport.iBitmapWidth = rotation == 0 || rotation == 180 ? (lpSize.cx + 7) / 8 : (lpSize.cy + 7) / 8;
-            comport.iBitmapHeight = rotation == 90 || rotation == 270 ? lpSize.cx : lpSize.cy;
-            var rect = new comport.RECT()
+            SendWindowsFont(new WindowsFontRequest
             {
-                Left = 0,
-                Top = 0,
-                Right = rotation == 0 || rotation == 180 ? lpSize.cx + 16 : lpSize.cy + 16,
-                Bottom = rotation == 90 || rotation == 270 ? lpSize.cx + 16 : lpSize.cy + 16
-            };
-            comport.FillRect(compatibleDc, ref rect, IntPtr.Zero);
-            int num3;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num3 = 0;
-                    break;
-                case 180:
-                    num3 = lpSize.cx;
-                    break;
-                default:
-                    num3 = lpSize.cy;
-                    break;
-            }
-            comport.TextOut_X_start = num3;
-            comport.TextOut_Y_start = rotation == 0 || rotation == 270 ? 0 : comport.iBitmapHeight;
-            comport.TextOut(compatibleDc, comport.TextOut_X_start, comport.TextOut_Y_start, content, content.Length);
-            comport.GetBitmapBits(bitmap, 5760000, comport.buf);
-            if (!comport.DeleteObject(comport.SelectObject(compatibleDc, hgdiobj)))
-            {
-                // int num4 = (int)MessageBox.Show("Select hFont=0", "title");
-            }
-            if (!comport.DeleteDC(compatibleDc))
-            {
-                // int num5 = (int)MessageBox.Show("hdcMem=0", "title");
-            }
-            if (!comport.DeleteObject(bitmap))
-            {
-                // int num6 = (int)MessageBox.Show("hBitmap=0", "title");
-            }
-            int num7;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num7 = x;
-                    break;
-                case 180:
-                    num7 = x - lpSize.cx;
-                    break;
-                default:
-                    num7 = x - lpSize.cy;
-                    break;
-            }
-            comport.iBitmapX = num7;
-            comport.iBitmapY = rotation == 0 || rotation == 270 ? y : y - comport.iBitmapHeight;
-            if (comport.iBitmapY < 0)
-            {
-                comport.iTop -= comport.iBitmapY;
-                comport.iBitmapY = 0;
-            }
-            if (comport.iBitmapX < 0)
-            {
-                comport.imgShiftX -= (comport.iBitmapX - 7) / 8;
-                comport.iBitmapX = 0;
-            }
-            byte[] bytes = Encoding.UTF8.GetBytes("BITMAP " + (object)comport.iBitmapX + "," + (object)comport.iBitmapY + "," + (object)(comport.iBitmapWidth - comport.imgShiftX) + "," + (object)(comport.iBitmapHeight - comport.iTop) + ",1,");
-            comport._serialPort.Write(bytes, 0, bytes.Length);
-            GC.Collect();
-            Encoding.Unicode.GetChars(comport.buf);
-            for (int iTop = comport.iTop; iTop < comport.iBitmapHeight; ++iTop)
-            {
-                int imgShiftX = comport.imgShiftX;
-                while (imgShiftX < comport.iBitmapWidth)
-                {
-                    byte[] numArray1 = new byte[300];
-                    Marshal.SizeOf((object)numArray1[0]);
-                    int length = numArray1.Length;
-                    IntPtr num8 = Marshal.AllocHGlobal(5760000);
-                    Marshal.Copy(comport.buf, iTop * 300, num8, 5760000 - iTop * 300);
-                    byte[] numArray2 = new byte[300];
-                    Marshal.Copy(num8, numArray2, 0, 300);
-                    comport._serialPort.Write(numArray2, 0, comport.iBitmapWidth);
-                    imgShiftX += comport.iBitmapWidth;
-                    Marshal.FreeHGlobal(num8);
-                    GC.Collect();
-                }
-            }
-            comport._serialPort.Write(comport.CRLF_byte, 0, comport.CRLF_byte.Length);
-            Marshal.Release(bitmap);
-            Marshal.Release(compatibleDc);
-            Marshal.Release(dc);
-            GC.Collect();
+                X = x, Y = y, Height = fontheight, Rotation = rotation,
+                Style = fontstyle, FaceName = szFaceName, Content = content, Unicode = false
+            });
         }
 
         public void windowsfontunicode(
@@ -865,125 +706,22 @@ label_1:
           string szFaceName,
           string content)
         {
-            comport.LOGFONT lplf = new comport.LOGFONT();
-            comport.SIZE lpSize = new comport.SIZE();
-            lplf.lfWidth = 0;
-            lplf.lfEscapement = 0;
-            lplf.lfOrientation = 0;
-            lplf.lfCharSet = (byte)1;
-            lplf.lfOutPrecision = (byte)0;
-            lplf.lfClipPrecision = (byte)0;
-            lplf.lfQuality = (byte)1;
-            lplf.lfPitchAndFamily = (byte)26;
-            lplf.lfFaceName = szFaceName;
-            lplf.lfHeight = fontheight;
-            lplf.lfItalic = (byte)0;
-            lplf.lfUnderline = (byte)0;
-            lplf.lfStrikeOut = (byte)0;
-            lplf.lfWeight = fontstyle < 2 ? 400 : 700;
-            lplf.lfEscapement = rotation * 10;
-            IntPtr dc = comport.GetDC(IntPtr.Zero);
-            IntPtr compatibleDc = comport.CreateCompatibleDC(dc);
-            IntPtr bitmap = comport.CreateBitmap(2400, 2400, 1U, 1U, IntPtr.Zero);
-            comport.SelectObject(compatibleDc, bitmap);
-            IntPtr fontIndirect = comport.CreateFontIndirect(lplf);
-            IntPtr hgdiobj = comport.SelectObject(compatibleDc, fontIndirect);
-            comport.GetTextExtentPoint32W(compatibleDc, content, content.Length, out lpSize);
-            int num1 = (int)comport.SetTextColor(compatibleDc, ColorTranslator.ToWin32(Color.Black));
-            int num2 = (int)comport.SetBkColor(compatibleDc, ColorTranslator.ToWin32(Color.White));
-            comport.iBitmapWidth = rotation == 0 || rotation == 180 ? (lpSize.cx + 7) / 8 : (lpSize.cy + 7) / 8;
-            comport.iBitmapHeight = rotation == 90 || rotation == 270 ? lpSize.cx : lpSize.cy;
-            var rect = new comport.RECT()
+            SendWindowsFont(new WindowsFontRequest
             {
-                Left = 0,
-                Top = 0,
-                Right = rotation == 0 || rotation == 180 ? lpSize.cx + 16 : lpSize.cy + 16,
-                Bottom = rotation == 90 || rotation == 270 ? lpSize.cx + 16 : lpSize.cy + 16
-            };
-            comport.FillRect(compatibleDc, ref rect, IntPtr.Zero);
-            int num3;
-            switch (rotation)
+                X = x, Y = y, Height = fontheight, Rotation = rotation,
+                Style = fontstyle, FaceName = szFaceName, Content = content, Unicode = true
+            });
+        }
+
+        private void SendWindowsFont(WindowsFontRequest request)
+        {
+            // fontunderline stays ignored. The renderer includes exactly one trailing CRLF.
+            var write = captureFontWriter();
+            WindowsFontCommand.Send(request, fontGdi, (packet, offset, count) =>
             {
-                case 0:
-                case 90:
-                    num3 = 0;
-                    break;
-                case 180:
-                    num3 = lpSize.cx;
-                    break;
-                default:
-                    num3 = lpSize.cy;
-                    break;
-            }
-            comport.TextOut_X_start = num3;
-            comport.TextOut_Y_start = rotation == 0 || rotation == 270 ? 0 : comport.iBitmapHeight;
-            comport.TextOutW(compatibleDc, comport.TextOut_X_start, comport.TextOut_Y_start, content, content.Length);
-            comport.GetBitmapBits(bitmap, 5760000, comport.buf);
-            if (!comport.DeleteObject(comport.SelectObject(compatibleDc, hgdiobj)))
-            {
-                // int num4 = (int)MessageBox.Show("Select hFont=0", "title");
-            }
-            if (!comport.DeleteDC(compatibleDc))
-            {
-                // int num5 = (int)MessageBox.Show("hdcMem=0", "title");
-            }
-            if (!comport.DeleteObject(bitmap))
-            {
-                // int num6 = (int)MessageBox.Show("hBitmap=0", "title");
-            }
-            int num7;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num7 = x;
-                    break;
-                case 180:
-                    num7 = x - lpSize.cx;
-                    break;
-                default:
-                    num7 = x - lpSize.cy;
-                    break;
-            }
-            comport.iBitmapX = num7;
-            comport.iBitmapY = rotation == 0 || rotation == 270 ? y : y - comport.iBitmapHeight;
-            if (comport.iBitmapY < 0)
-            {
-                comport.iTop -= comport.iBitmapY;
-                comport.iBitmapY = 0;
-            }
-            if (comport.iBitmapX < 0)
-            {
-                comport.imgShiftX -= (comport.iBitmapX - 7) / 8;
-                comport.iBitmapX = 0;
-            }
-            byte[] bytes = Encoding.UTF8.GetBytes("BITMAP " + (object)comport.iBitmapX + "," + (object)comport.iBitmapY + "," + (object)(comport.iBitmapWidth - comport.imgShiftX) + "," + (object)(comport.iBitmapHeight - comport.iTop) + ",1,");
-            comport._serialPort.Write(bytes, 0, bytes.Length);
-            GC.Collect();
-            Encoding.Unicode.GetChars(comport.buf);
-            for (int iTop = comport.iTop; iTop < comport.iBitmapHeight; ++iTop)
-            {
-                int imgShiftX = comport.imgShiftX;
-                while (imgShiftX < comport.iBitmapWidth)
-                {
-                    byte[] numArray1 = new byte[300];
-                    Marshal.SizeOf((object)numArray1[0]);
-                    int length = numArray1.Length;
-                    IntPtr num8 = Marshal.AllocHGlobal(5760000);
-                    Marshal.Copy(comport.buf, iTop * 300, num8, 5760000 - iTop * 300);
-                    byte[] numArray2 = new byte[300];
-                    Marshal.Copy(num8, numArray2, 0, 300);
-                    comport._serialPort.Write(numArray2, 0, comport.iBitmapWidth);
-                    imgShiftX += comport.iBitmapWidth;
-                    Marshal.FreeHGlobal(num8);
-                    GC.Collect();
-                }
-            }
-            comport._serialPort.Write(comport.CRLF_byte, 0, comport.CRLF_byte.Length);
-            Marshal.Release(bitmap);
-            Marshal.Release(compatibleDc);
-            Marshal.Release(dc);
-            GC.Collect();
+                write(packet, offset, count);
+                return count; // SerialPort.Write either completes or throws; never retry it here.
+            });
         }
 
         public void printphoto(int xpoint, int ypoint, string filename)
