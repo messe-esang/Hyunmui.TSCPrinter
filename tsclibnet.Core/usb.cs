@@ -22,13 +22,18 @@ namespace TSCSDK
         private readonly IWindowsFontGdi fontGdi;
         private readonly UsbRawWriter fontWriter;
         private readonly Func<int> fontHandle;
+        private readonly UsbDeviceOpener deviceOpener;
 
         public usb() : this(new WindowsFontGdi(), defaultWriter, () => HidHandle)
         {
         }
 
         internal usb(IWindowsFontGdi fontGdi, UsbRawWriter fontWriter, Func<int> fontHandle)
+            : this(fontGdi, fontWriter, fontHandle, new UsbDeviceOpener()) { }
+
+        internal usb(IWindowsFontGdi fontGdi, UsbRawWriter fontWriter, Func<int> fontHandle, UsbDeviceOpener deviceOpener)
         {
+            this.deviceOpener = deviceOpener;
             this.fontGdi = fontGdi;
             this.fontWriter = fontWriter;
             this.fontHandle = fontHandle;
@@ -235,96 +240,18 @@ namespace TSCSDK
 
         public bool openport()
         {
-            int num1 = 0;
-            usb.HidD_GetHidGuid(ref usb.guidHID);
-            uint requiredSize = 0;
-            usb.PnPHandle = usb.SetupDiGetClassDevs(ref usb.GUID_DEVINTERFACE_USBPRINT, IntPtr.Zero, IntPtr.Zero, usb.ClassDevsFlags.DIGCF_PRESENT | usb.ClassDevsFlags.DIGCF_DEVICEINTERFACE);
-            usb.SP_DEVICE_INTERFACE_DATA deviceInterfaceData = new usb.SP_DEVICE_INTERFACE_DATA();
-            deviceInterfaceData.cbSize = Marshal.SizeOf((object)deviceInterfaceData);
-            usb.SetupDiEnumDeviceInterfaces(usb.PnPHandle, IntPtr.Zero, ref usb.GUID_DEVINTERFACE_USBPRINT, (uint)num1, ref deviceInterfaceData);
-            usb.SetupDiEnumDeviceInterfaces(usb.PnPHandle, IntPtr.Zero, ref usb.GUID_DEVINTERFACE_USBPRINT, (uint)num1, ref deviceInterfaceData);
-            usb.SP_DEVINFO_DATA DeviceInfoData = new usb.SP_DEVINFO_DATA();
-            DeviceInfoData.cbSize = (uint)Marshal.SizeOf((object)DeviceInfoData);
-            usb.SetupDiEnumDeviceInfo(usb.PnPHandle, num1, ref DeviceInfoData);
-            usb.SetupDiGetDeviceInterfaceDetail(usb.PnPHandle, ref deviceInterfaceData, IntPtr.Zero, 0U, ref requiredSize, IntPtr.Zero);
-            Marshal.GetLastWin32Error();
-            IntPtr num2 = Marshal.AllocCoTaskMem((int)requiredSize);
-            switch (IntPtr.Size)
-            {
-                case 4:
-                    Marshal.WriteInt32(num2, 4 + Marshal.SystemDefaultCharSize);
-                    break;
-                case 8:
-                    Marshal.WriteInt32(num2, 8);
-                    break;
-                default:
-                    throw new NotSupportedException("Architecture not supported.");
-            }
-            usb.SP_DEVICE_INTERFACE_DETAIL_DATA structure = new usb.SP_DEVICE_INTERFACE_DETAIL_DATA();
-            structure.cbSize = (uint)Marshal.SizeOf((object)structure);
-            if (!usb.SetupDiGetDeviceInterfaceDetail(usb.PnPHandle, ref deviceInterfaceData, num2, requiredSize, ref requiredSize, IntPtr.Zero))
-                return false;
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_DEVICEDESC);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_CLASS);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_CLASSGUID);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_DRIVER);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_MFG);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_FRIENDLYNAME);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_LOWERFILTERS);
-            string stringAuto = Marshal.PtrToStringAuto(new IntPtr(num2.ToInt64() + 4L));
-            for (int index = 0; index < 8; ++index)
-                usb.VID += stringAuto[index + 8].ToString();
-            for (int index = 0; index < 8; ++index)
-                usb.PID += stringAuto[index + 17].ToString();
-            usb.HidHandle = usb.CreateFile(stringAuto, 3221225472U, 3U, IntPtr.Zero, 3U, 0U, IntPtr.Zero);
-            return usb.HidHandle != -1;
+            int handle;
+            if (!deviceOpener.TryOpen(false, out handle)) return false;
+            HidHandle = handle;
+            return handle != -1;
         }
 
         public bool openport_overlapped()
         {
-            int num1 = 0;
-            usb.HidD_GetHidGuid(ref usb.guidHID);
-            uint requiredSize = 0;
-            usb.PnPHandle = usb.SetupDiGetClassDevs(ref usb.GUID_DEVINTERFACE_USBPRINT, IntPtr.Zero, IntPtr.Zero, usb.ClassDevsFlags.DIGCF_PRESENT | usb.ClassDevsFlags.DIGCF_DEVICEINTERFACE);
-            usb.SP_DEVICE_INTERFACE_DATA deviceInterfaceData = new usb.SP_DEVICE_INTERFACE_DATA();
-            deviceInterfaceData.cbSize = Marshal.SizeOf((object)deviceInterfaceData);
-            usb.SetupDiEnumDeviceInterfaces(usb.PnPHandle, IntPtr.Zero, ref usb.GUID_DEVINTERFACE_USBPRINT, (uint)num1, ref deviceInterfaceData);
-            usb.SetupDiEnumDeviceInterfaces(usb.PnPHandle, IntPtr.Zero, ref usb.GUID_DEVINTERFACE_USBPRINT, (uint)num1, ref deviceInterfaceData);
-            usb.SP_DEVINFO_DATA DeviceInfoData = new usb.SP_DEVINFO_DATA();
-            DeviceInfoData.cbSize = (uint)Marshal.SizeOf((object)DeviceInfoData);
-            usb.SetupDiEnumDeviceInfo(usb.PnPHandle, num1, ref DeviceInfoData);
-            usb.SetupDiGetDeviceInterfaceDetail(usb.PnPHandle, ref deviceInterfaceData, IntPtr.Zero, 0U, ref requiredSize, IntPtr.Zero);
-            Marshal.GetLastWin32Error();
-            IntPtr num2 = Marshal.AllocCoTaskMem((int)requiredSize);
-            switch (IntPtr.Size)
-            {
-                case 4:
-                    Marshal.WriteInt32(num2, 4 + Marshal.SystemDefaultCharSize);
-                    break;
-                case 8:
-                    Marshal.WriteInt32(num2, 8);
-                    break;
-                default:
-                    throw new NotSupportedException("Architecture not supported.");
-            }
-            usb.SP_DEVICE_INTERFACE_DETAIL_DATA structure = new usb.SP_DEVICE_INTERFACE_DETAIL_DATA();
-            structure.cbSize = (uint)Marshal.SizeOf((object)structure);
-            if (!usb.SetupDiGetDeviceInterfaceDetail(usb.PnPHandle, ref deviceInterfaceData, num2, requiredSize, ref requiredSize, IntPtr.Zero))
-                return false;
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_DEVICEDESC);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_CLASS);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_CLASSGUID);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_DRIVER);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_MFG);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_FRIENDLYNAME);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_LOWERFILTERS);
-            string stringAuto = Marshal.PtrToStringAuto(new IntPtr(num2.ToInt32() + 4));
-            for (int index = 0; index < 8; ++index)
-                usb.VID += stringAuto[index + 8].ToString();
-            for (int index = 0; index < 8; ++index)
-                usb.PID += stringAuto[index + 17].ToString();
-            usb.HidHandle = usb.CreateFile(stringAuto, 3221225472U, 3U, IntPtr.Zero, 3U, 1073741952U, IntPtr.Zero);
-            return usb.HidHandle != -1;
+            int handle;
+            if (!deviceOpener.TryOpen(true, out handle)) return false;
+            HidHandle = handle;
+            return handle != -1;
         }
 
         public int openport_mult(int portnumber)
