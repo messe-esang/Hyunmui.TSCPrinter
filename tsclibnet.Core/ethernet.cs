@@ -42,11 +42,6 @@ namespace TSCSDK
         private const int CLIP_DEFAULT_PRECIS = 0;
         private const int BUFFER_WIDTH = 2400;
         private const int BUFFER_HEIGHT = 2400;
-        private int sleep_time;
-        private int file_total_length;
-        private static string read_string = "";
-        private static string[] diag_array = new string[1024];
-        private static byte[] load_buffer = new byte[1024];
 
         [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr CreateFontIndirect([MarshalAs(UnmanagedType.LPStruct), In] ethernet.LOGFONT lplf);
