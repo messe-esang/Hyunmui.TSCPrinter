@@ -38,15 +38,6 @@ namespace TSCSDK
       (byte) 13,
       (byte) 10
         };
-        private static int iTop = 0;
-        private static int iBitmapWidth;
-        private static int iBitmapHeight;
-        private static int iBitmapX;
-        private static int iBitmapY;
-        private static int TextOut_X_start;
-        private static int TextOut_Y_start;
-        private static byte[] buf = new byte[5760000];
-        private static int imgShiftX = 0;
         private const int OUT_DEFAULT_PRECIS = 0;
         private const int CLIP_DEFAULT_PRECIS = 0;
         private const int BUFFER_WIDTH = 2400;
@@ -76,6 +67,12 @@ namespace TSCSDK
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr GetDC(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern int ReleaseDC(IntPtr hWnd, IntPtr hdc);
+
+        [DllImport("gdi32.dll")]
+        private static extern IntPtr GetStockObject(int objectIndex);
 
         [DllImport("gdi32.dll")]
         private static extern uint SetTextColor(IntPtr hdc, int crColor);
@@ -1122,125 +1119,11 @@ namespace TSCSDK
           string szFaceName,
           string content)
         {
-            ethernet.LOGFONT lplf = new ethernet.LOGFONT();
-            ethernet.SIZE lpSize = new ethernet.SIZE();
-            lplf.lfWidth = 0;
-            lplf.lfEscapement = 0;
-            lplf.lfOrientation = 0;
-            lplf.lfCharSet = (byte)1;
-            lplf.lfOutPrecision = (byte)0;
-            lplf.lfClipPrecision = (byte)0;
-            lplf.lfQuality = (byte)1;
-            lplf.lfPitchAndFamily = (byte)26;
-            lplf.lfFaceName = szFaceName;
-            lplf.lfHeight = fontheight;
-            lplf.lfItalic = (byte)0;
-            lplf.lfUnderline = (byte)0;
-            lplf.lfStrikeOut = (byte)0;
-            lplf.lfWeight = fontstyle < 2 ? 400 : 700;
-            lplf.lfEscapement = rotation * 10;
-            IntPtr dc = ethernet.GetDC(IntPtr.Zero);
-            IntPtr compatibleDc = ethernet.CreateCompatibleDC(dc);
-            IntPtr bitmap = ethernet.CreateBitmap(2400, 2400, 1U, 1U, IntPtr.Zero);
-            ethernet.SelectObject(compatibleDc, bitmap);
-            IntPtr fontIndirect = ethernet.CreateFontIndirect(lplf);
-            IntPtr hgdiobj = ethernet.SelectObject(compatibleDc, fontIndirect);
-            ethernet.GetTextExtentPoint32(compatibleDc, content, content.Length, out lpSize);
-            int num1 = (int)ethernet.SetTextColor(compatibleDc, ColorTranslator.ToWin32(Color.Black));
-            int num2 = (int)ethernet.SetBkColor(compatibleDc, ColorTranslator.ToWin32(Color.White));
-            ethernet.iBitmapWidth = rotation == 0 || rotation == 180 ? (lpSize.cx + 7) / 8 : (lpSize.cy + 7) / 8;
-            ethernet.iBitmapHeight = rotation == 90 || rotation == 270 ? lpSize.cx : lpSize.cy;
-            var rect = new ethernet.RECT()
+            SendWindowsFont(new WindowsFontRequest
             {
-                Left = 0,
-                Top = 0,
-                Right = rotation == 0 || rotation == 180 ? lpSize.cx + 16 : lpSize.cy + 16,
-                Bottom = rotation == 90 || rotation == 270 ? lpSize.cx + 16 : lpSize.cy + 16
-            };
-            ethernet.FillRect(compatibleDc, ref rect, IntPtr.Zero);
-            int num3;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num3 = 0;
-                    break;
-                case 180:
-                    num3 = lpSize.cx;
-                    break;
-                default:
-                    num3 = lpSize.cy;
-                    break;
-            }
-            ethernet.TextOut_X_start = num3;
-            ethernet.TextOut_Y_start = rotation == 0 || rotation == 270 ? 0 : ethernet.iBitmapHeight;
-            ethernet.TextOut(compatibleDc, ethernet.TextOut_X_start, ethernet.TextOut_Y_start, content, content.Length);
-            ethernet.GetBitmapBits(bitmap, 5760000, ethernet.buf);
-            if (!ethernet.DeleteObject(ethernet.SelectObject(compatibleDc, hgdiobj)))
-            {
-                // int num4 = (int)MessageBox.Show("Select hFont=0", "title");
-            }
-            if (!ethernet.DeleteDC(compatibleDc))
-            {
-                // int num5 = (int)MessageBox.Show("hdcMem=0", "title");
-            }
-            if (!ethernet.DeleteObject(bitmap))
-            {
-                // int num6 = (int)MessageBox.Show("hBitmap=0", "title");
-            }
-            int num7;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num7 = x;
-                    break;
-                case 180:
-                    num7 = x - lpSize.cx;
-                    break;
-                default:
-                    num7 = x - lpSize.cy;
-                    break;
-            }
-            ethernet.iBitmapX = num7;
-            ethernet.iBitmapY = rotation == 0 || rotation == 270 ? y : y - ethernet.iBitmapHeight;
-            if (ethernet.iBitmapY < 0)
-            {
-                ethernet.iTop -= ethernet.iBitmapY;
-                ethernet.iBitmapY = 0;
-            }
-            if (ethernet.iBitmapX < 0)
-            {
-                ethernet.imgShiftX -= (ethernet.iBitmapX - 7) / 8;
-                ethernet.iBitmapX = 0;
-            }
-            byte[] bytes = Encoding.UTF8.GetBytes("BITMAP " + (object)ethernet.iBitmapX + "," + (object)ethernet.iBitmapY + "," + (object)(ethernet.iBitmapWidth - ethernet.imgShiftX) + "," + (object)(ethernet.iBitmapHeight - ethernet.iTop) + ",1,");
-            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-            GC.Collect();
-            Encoding.Unicode.GetChars(ethernet.buf);
-            for (int iTop = ethernet.iTop; iTop < ethernet.iBitmapHeight; ++iTop)
-            {
-                int imgShiftX = ethernet.imgShiftX;
-                while (imgShiftX < ethernet.iBitmapWidth)
-                {
-                    byte[] numArray1 = new byte[300];
-                    Marshal.SizeOf((object)numArray1[0]);
-                    int length = numArray1.Length;
-                    IntPtr num8 = Marshal.AllocHGlobal(5760000);
-                    Marshal.Copy(ethernet.buf, iTop * 300, num8, 5760000 - iTop * 300);
-                    byte[] numArray2 = new byte[300];
-                    Marshal.Copy(num8, numArray2, 0, 300);
-                    this.tempSocket.Send(numArray2, ethernet.iBitmapWidth, SocketFlags.None);
-                    imgShiftX += ethernet.iBitmapWidth;
-                    Marshal.FreeHGlobal(num8);
-                    GC.Collect();
-                }
-            }
-            this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
-            Marshal.Release(bitmap);
-            Marshal.Release(compatibleDc);
-            Marshal.Release(dc);
-            GC.Collect();
+                X = x, Y = y, Height = fontheight, Rotation = rotation,
+                Style = fontstyle, FaceName = szFaceName, Content = content, Unicode = false
+            });
         }
 
         public void windowsfontunicode(
@@ -1253,127 +1136,56 @@ namespace TSCSDK
           string szFaceName,
           string content)
         {
-            ethernet.LOGFONT lplf = new ethernet.LOGFONT();
-            ethernet.SIZE lpSize = new ethernet.SIZE();
-            lplf.lfWidth = 0;
-            lplf.lfEscapement = 0;
-            lplf.lfOrientation = 0;
-            lplf.lfCharSet = (byte)1;
-            lplf.lfOutPrecision = (byte)0;
-            lplf.lfClipPrecision = (byte)0;
-            lplf.lfQuality = (byte)1;
-            lplf.lfPitchAndFamily = (byte)26;
-            lplf.lfFaceName = szFaceName;
-            lplf.lfHeight = fontheight;
-            lplf.lfItalic = (byte)0;
-            lplf.lfUnderline = (byte)0;
-            lplf.lfStrikeOut = (byte)0;
-            lplf.lfWeight = fontstyle < 2 ? 400 : 700;
-            lplf.lfEscapement = rotation * 10;
-            IntPtr dc = ethernet.GetDC(IntPtr.Zero);
-            IntPtr compatibleDc = ethernet.CreateCompatibleDC(dc);
-            IntPtr bitmap = ethernet.CreateBitmap(2400, 2400, 1U, 1U, IntPtr.Zero);
-            ethernet.SelectObject(compatibleDc, bitmap);
-            IntPtr fontIndirect = ethernet.CreateFontIndirect(lplf);
-            IntPtr hgdiobj = ethernet.SelectObject(compatibleDc, fontIndirect);
-            ethernet.GetTextExtentPoint32W(compatibleDc, content, content.Length, out lpSize);
-            int num1 = (int)ethernet.SetTextColor(compatibleDc, ColorTranslator.ToWin32(Color.Black));
-            int num2 = (int)ethernet.SetBkColor(compatibleDc, ColorTranslator.ToWin32(Color.White));
-            ethernet.iBitmapWidth = rotation == 0 || rotation == 180 ? (lpSize.cx + 7) / 8 : (lpSize.cy + 7) / 8;
-            ethernet.iBitmapHeight = rotation == 90 || rotation == 270 ? lpSize.cx : lpSize.cy;
-            var rect = new ethernet.RECT()
+            SendWindowsFont(new WindowsFontRequest
             {
-                Left = 0,
-                Top = 0,
-                Right = rotation == 0 || rotation == 180 ? lpSize.cx + 16 : lpSize.cy + 16,
-                Bottom = rotation == 90 || rotation == 270 ? lpSize.cx + 16 : lpSize.cy + 16
-            };
-            ethernet.FillRect(compatibleDc, ref rect, IntPtr.Zero);
-            int num3;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num3 = 0;
-                    break;
-                case 180:
-                    num3 = lpSize.cx;
-                    break;
-                default:
-                    num3 = lpSize.cy;
-                    break;
-            }
-            ethernet.TextOut_X_start = num3;
-            ethernet.TextOut_Y_start = rotation == 0 || rotation == 270 ? 0 : ethernet.iBitmapHeight;
-            ethernet.TextOutW(compatibleDc, ethernet.TextOut_X_start, ethernet.TextOut_Y_start, content, content.Length);
-            ethernet.GetBitmapBits(bitmap, 5760000, ethernet.buf);
-            if (!ethernet.DeleteObject(ethernet.SelectObject(compatibleDc, hgdiobj)))
-            {
-                // int num4 = (int)MessageBox.Show("Select hFont=0", "title");
-            }
-            if (!ethernet.DeleteDC(compatibleDc))
-            {
-                // int num5 = (int)MessageBox.Show("hdcMem=0", "title");
-            }
-            if (!ethernet.DeleteObject(bitmap))
-            {
-                // int num6 = (int)MessageBox.Show("hBitmap=0", "title");
-            }
-            int num7;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num7 = x;
-                    break;
-                case 180:
-                    num7 = x - lpSize.cx;
-                    break;
-                default:
-                    num7 = x - lpSize.cy;
-                    break;
-            }
-            ethernet.iBitmapX = num7;
-            ethernet.iBitmapY = rotation == 0 || rotation == 270 ? y : y - ethernet.iBitmapHeight;
-            if (ethernet.iBitmapY < 0)
-            {
-                ethernet.iTop -= ethernet.iBitmapY;
-                ethernet.iBitmapY = 0;
-            }
-            if (ethernet.iBitmapX < 0)
-            {
-                ethernet.imgShiftX -= (ethernet.iBitmapX - 7) / 8;
-                ethernet.iBitmapX = 0;
-            }
-            byte[] bytes = Encoding.UTF8.GetBytes("BITMAP " + (object)ethernet.iBitmapX + "," + (object)ethernet.iBitmapY + "," + (object)(ethernet.iBitmapWidth - ethernet.imgShiftX) + "," + (object)(ethernet.iBitmapHeight - ethernet.iTop) + ",1,");
-            this.tempSocket.Send(bytes, bytes.Length, SocketFlags.None);
-            GC.Collect();
-            Encoding.Unicode.GetChars(ethernet.buf);
-            for (int iTop = ethernet.iTop; iTop < ethernet.iBitmapHeight; ++iTop)
-            {
-                int imgShiftX = ethernet.imgShiftX;
-                while (imgShiftX < ethernet.iBitmapWidth)
-                {
-                    byte[] numArray1 = new byte[300];
-                    Marshal.SizeOf((object)numArray1[0]);
-                    int length = numArray1.Length;
-                    IntPtr num8 = Marshal.AllocHGlobal(5760000);
-                    Marshal.Copy(ethernet.buf, iTop * 300, num8, 5760000 - iTop * 300);
-                    byte[] numArray2 = new byte[300];
-                    Marshal.Copy(num8, numArray2, 0, 300);
-                    this.tempSocket.Send(numArray2, ethernet.iBitmapWidth, SocketFlags.None);
-                    imgShiftX += ethernet.iBitmapWidth;
-                    Marshal.FreeHGlobal(num8);
-                    GC.Collect();
-                }
-            }
-            this.tempSocket.Send(ethernet.CRLF_byte, ethernet.CRLF_byte.Length, SocketFlags.None);
-            Marshal.Release(bitmap);
-            Marshal.Release(compatibleDc);
-            Marshal.Release(dc);
-            GC.Collect();
+                X = x, Y = y, Height = fontheight, Rotation = rotation,
+                Style = fontstyle, FaceName = szFaceName, Content = content, Unicode = true
+            });
         }
 
+        private void SendWindowsFont(WindowsFontRequest request)
+        {
+            // fontunderline remains ignored, as in both public legacy implementations.
+            var socket = this.tempSocket;
+            WindowsFontCommand.Send(request, new EthernetFontGdi(),
+                (packet, offset, count) => socket.Send(packet, offset, count, SocketFlags.None));
+        }
+
+        internal sealed class EthernetFontGdi : IWindowsFontGdi
+        {
+            public IntPtr GetScreenDc() => GetDC(IntPtr.Zero);
+            public IntPtr CreateMemoryDc(IntPtr dc) => CreateCompatibleDC(dc);
+            public IntPtr CreateFont(LOGFONT font) => CreateFontIndirect(font);
+            public IntPtr CreateBitmap() => ethernet.CreateBitmap(2400, 2400, 1U, 1U, IntPtr.Zero);
+            public IntPtr SelectObject(IntPtr dc, IntPtr value) => ethernet.SelectObject(dc, value);
+            public bool Measure(IntPtr dc, WindowsFontRequest request, out SIZE size)
+            {
+                return request.Unicode
+                    ? GetTextExtentPoint32W(dc, request.Content, request.Content.Length, out size)
+                    : GetTextExtentPoint32(dc, request.Content, request.Content.Length, out size);
+            }
+            public bool SetColors(IntPtr dc)
+            {
+                return SetTextColor(dc, ColorTranslator.ToWin32(Color.Black)) != uint.MaxValue
+                    && SetBkColor(dc, ColorTranslator.ToWin32(Color.White)) != uint.MaxValue;
+            }
+            public bool Clear(IntPtr dc)
+            {
+                var brush = GetStockObject(0); // Borrowed WHITE_BRUSH; never delete a stock object.
+                var rect = new RECT { Left = 0, Top = 0, Right = 2400, Bottom = 2400 };
+                return brush != IntPtr.Zero && FillRect(dc, ref rect, brush) != 0;
+            }
+            public bool Draw(IntPtr dc, WindowsFontRequest request, int x, int y)
+            {
+                return request.Unicode
+                    ? TextOutW(dc, x, y, request.Content, request.Content.Length)
+                    : TextOut(dc, x, y, request.Content, request.Content.Length);
+            }
+            public int ReadBitmap(IntPtr bitmap, byte[] buffer) => GetBitmapBits(bitmap, buffer.Length, buffer);
+            public bool DeleteObject(IntPtr value) => ethernet.DeleteObject(value);
+            public bool DeleteDc(IntPtr dc) => DeleteDC(dc);
+            public bool ReleaseScreenDc(IntPtr dc) => ReleaseDC(IntPtr.Zero, dc) != 0;
+        }
         public void printphoto(int xpoint, int ypoint, string filename)
         {
             BitmapCommand.SendFile(xpoint, ypoint, filename,
