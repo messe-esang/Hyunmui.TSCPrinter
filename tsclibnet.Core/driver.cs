@@ -33,10 +33,6 @@ namespace TSCSDK
       (byte) 13,
       (byte) 10
         };
-        private const int OUT_DEFAULT_PRECIS = 0;
-        private const int CLIP_DEFAULT_PRECIS = 0;
-        private const int BUFFER_WIDTH = 2400;
-        private const int BUFFER_HEIGHT = 2400;
         private static int dwWritten = 0;
 
         private readonly DriverCommandWriter commandWriter = new DriverCommandWriter(
@@ -718,20 +714,6 @@ namespace TSCSDK
         public void send_bitmap(int x_axis, int y_axis, Bitmap bitmap_file)
         {
             this.sendpicture(x_axis, y_axis, bitmap_file);
-        }
-
-        private byte[] bit_array2byte_array(byte[] data)
-        {
-            int length = (data.Length + 7) / 8;
-            byte[] numArray = new byte[length];
-            for (int index = 0; index < length; ++index)
-                numArray[index] = (byte)0;
-            for (int index = 0; index <= data.Length - 1; ++index)
-            {
-                if (data[index] == (byte)1)
-                    numArray[index / 8] ^= (byte)(128 >> index % 8);
-            }
-            return numArray;
         }
 
         [StructLayout(LayoutKind.Sequential)]
