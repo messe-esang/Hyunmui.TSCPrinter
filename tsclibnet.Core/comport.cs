@@ -1,4 +1,4 @@
-// Decompiled with JetBrains decompiler
+﻿// Decompiled with JetBrains decompiler
 // Type: TSCSDK.comport
 // Assembly: tsclibnet, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
 // MVID: A64385FF-5635-48AA-8C98-BF7EE2302ADD
@@ -35,10 +35,6 @@ namespace TSCSDK
       (byte) 13,
       (byte) 10
         };
-        private const int OUT_DEFAULT_PRECIS = 0;
-        private const int CLIP_DEFAULT_PRECIS = 0;
-        private const int BUFFER_WIDTH = 2400;
-        private const int BUFFER_HEIGHT = 2400;
 
         [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr CreateFontIndirect([MarshalAs(UnmanagedType.LPStruct), In] comport.LOGFONT lplf);
@@ -108,37 +104,7 @@ namespace TSCSDK
           string databit,
           string stopbit)
         {
-            comport._serialPort = new SerialPort(portnumber);
-            comport._serialPort.BaudRate = int.Parse(baudrate);
-            if (parity.ToUpper() == "N")
-                comport._serialPort.Parity = Parity.None;
-            else if (parity.ToUpper() == "O")
-                comport._serialPort.Parity = Parity.Odd;
-            else if (parity.ToUpper() == "E")
-                comport._serialPort.Parity = Parity.Even;
-            if (databit.ToUpper() == "8")
-                comport._serialPort.DataBits = 8;
-            else if (databit.ToUpper() == "7")
-                comport._serialPort.DataBits = 7;
-            if (stopbit.ToUpper() == "1")
-                comport._serialPort.StopBits = StopBits.One;
-            else if (stopbit.ToUpper() == "1.5")
-                comport._serialPort.StopBits = StopBits.OnePointFive;
-            else if (stopbit.ToUpper() == "2")
-                comport._serialPort.StopBits = StopBits.Two;
-            comport._serialPort.Handshake = Handshake.XOnXOff;
-            comport._serialPort.RtsEnable = true;
-            comport._serialPort.ReadTimeout = 2000;
-            comport._serialPort.WriteTimeout = 2000;
-            try
-            {
-                comport._serialPort.Open();
-                return true;
-            }
-            catch (IOException ex)
-            {
-                return false;
-            }
+            return openport(portnumber, baudrate, parity, databit, stopbit);
         }
 
 
