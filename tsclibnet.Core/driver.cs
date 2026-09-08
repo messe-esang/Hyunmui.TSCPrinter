@@ -5,6 +5,7 @@
 // Assembly location: C:\workspaces\drivers\tsc-printer\TSC C# SDK 20210323\x64\tsclibnet.dll
 
 using System;
+using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Printing;
 using System.Globalization;
@@ -33,15 +34,6 @@ namespace TSCSDK
       (byte) 13,
       (byte) 10
         };
-        private static int iTop = 0;
-        private static int iBitmapWidth;
-        private static int iBitmapHeight;
-        private static int iBitmapX;
-        private static int iBitmapY;
-        private static int TextOut_X_start;
-        private static int TextOut_Y_start;
-        private static byte[] buf = new byte[5760000];
-        private static int imgShiftX = 0;
         private const int OUT_DEFAULT_PRECIS = 0;
         private const int CLIP_DEFAULT_PRECIS = 0;
         private const int BUFFER_WIDTH = 2400;
@@ -51,6 +43,20 @@ namespace TSCSDK
         private static int dwWritten = 0;
         private static IntPtr pBytes;
         private static IntPtr CRLFBytes;
+
+        internal delegate bool FontPrinterWrite(IntPtr printer, byte[] bytes, int count, out int written);
+        private readonly IWindowsFontGdi fontGdi;
+        private readonly Func<IntPtr> fontPrinterHandle;
+        private readonly FontPrinterWrite fontPrinterWrite;
+
+        public driver() : this(new ethernet.EthernetFontGdi(), () => hPrinter, WritePrinter) { }
+
+        internal driver(IWindowsFontGdi native, Func<IntPtr> printerHandle, FontPrinterWrite write)
+        {
+            fontGdi = native;
+            fontPrinterHandle = printerHandle;
+            fontPrinterWrite = write;
+        }
 
         [DllImport("winspool.Drv", EntryPoint = "OpenPrinterA", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.StdCall, SetLastError = true)]
         private static extern bool OpenPrinter([MarshalAs(UnmanagedType.LPStr)] string szPrinter, out IntPtr hPrinter, IntPtr pd);
@@ -108,28 +114,8 @@ namespace TSCSDK
         [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr CreateFontIndirect([MarshalAs(UnmanagedType.LPStruct), In] driver.LOGFONT lplf);
 
-        [DllImport("gdi32.dll", SetLastError = true)]
-        private static extern IntPtr CreateCompatibleDC([In] IntPtr hdc);
-
-        [DllImport("gdi32.dll")]
-        private static extern IntPtr CreateBitmap(
-          int nWidth,
-          int nHeight,
-          uint cPlanes,
-          uint cBitsPerPel,
-          IntPtr lpvBits);
-
         [DllImport("gdi32.dll")]
         public static extern IntPtr SelectObject([In] IntPtr hdc, [In] IntPtr hgdiobj);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr GetDC(IntPtr hWnd);
-
-        [DllImport("gdi32.dll")]
-        private static extern uint SetTextColor(IntPtr hdc, int crColor);
-
-        [DllImport("gdi32.dll")]
-        private static extern uint SetBkColor(IntPtr hdc, int crColor);
 
         [DllImport("gdi32.dll")]
         private static extern bool Rectangle(
@@ -139,48 +125,12 @@ namespace TSCSDK
           int nRightRect,
           int nBottomRect);
 
-        [DllImport("user32.dll")]
-        private static extern int FillRect(IntPtr hDC, [In] ref driver.RECT lprc, IntPtr hbr);
-
-        [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
-        private static extern bool TextOut(
-          IntPtr hdc,
-          int nXStart,
-          int nYStart,
-          string lpString,
-          int cbString);
-
-        [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
-        private static extern bool TextOutW(
-          IntPtr hdc,
-          int nXStart,
-          int nYStart,
-          string lpWString,
-          int cbString);
-
-        [DllImport("gdi32.dll")]
-        private static extern int GetBitmapBits(IntPtr hbmp, int cbBuffer, [Out] byte[] lpvBits);
-
         [DllImport("gdi32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool DeleteObject([In] IntPtr hObject);
 
         [DllImport("gdi32.dll")]
         public static extern bool DeleteDC([In] IntPtr hdc);
-
-        [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
-        private static extern bool GetTextExtentPoint32(
-          IntPtr hdc,
-          string lpString,
-          int cbString,
-          out driver.SIZE lpSize);
-
-        [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
-        private static extern bool GetTextExtentPoint32W(
-          IntPtr hdc,
-          string lpWString,
-          int cbString,
-          out driver.SIZE lpSize);
 
         public bool openport(string szPrinterName)
         {
@@ -820,132 +770,17 @@ namespace TSCSDK
           string szFaceName,
           string content)
         {
-            driver.LOGFONT lplf = new driver.LOGFONT();
-            driver.SIZE lpSize = new driver.SIZE();
-            lplf.lfWidth = 0;
-            lplf.lfEscapement = 0;
-            lplf.lfOrientation = 0;
-            lplf.lfCharSet = (byte)1;
-            lplf.lfOutPrecision = (byte)0;
-            lplf.lfClipPrecision = (byte)0;
-            lplf.lfQuality = (byte)1;
-            lplf.lfPitchAndFamily = (byte)26;
-            lplf.lfFaceName = szFaceName;
-            lplf.lfHeight = fontheight;
-            lplf.lfItalic = (byte)0;
-            lplf.lfUnderline = (byte)0;
-            lplf.lfStrikeOut = (byte)0;
-            lplf.lfWeight = fontstyle < 2 ? 400 : 700;
-            lplf.lfEscapement = rotation * 10;
-            IntPtr dc = driver.GetDC(IntPtr.Zero);
-            IntPtr compatibleDc = driver.CreateCompatibleDC(dc);
-            IntPtr bitmap = driver.CreateBitmap(2400, 2400, 1U, 1U, IntPtr.Zero);
-            driver.SelectObject(compatibleDc, bitmap);
-            IntPtr fontIndirect = driver.CreateFontIndirect(lplf);
-            IntPtr hgdiobj = driver.SelectObject(compatibleDc, fontIndirect);
-            driver.GetTextExtentPoint32(compatibleDc, content, content.Length, out lpSize);
-            int num1 = (int)driver.SetTextColor(compatibleDc, ColorTranslator.ToWin32(Color.Black));
-            int num2 = (int)driver.SetBkColor(compatibleDc, ColorTranslator.ToWin32(Color.White));
-            driver.iBitmapWidth = rotation == 0 || rotation == 180 ? (lpSize.cx + 7) / 8 : (lpSize.cy + 7) / 8;
-            driver.iBitmapHeight = rotation == 90 || rotation == 270 ? lpSize.cx : lpSize.cy;
-            var rect = new driver.RECT()
+            SendWindowsFont(new WindowsFontRequest
             {
-                Left = 0,
-                Top = 0,
-                Right = rotation == 0 || rotation == 180 ? lpSize.cx + 16 : lpSize.cy + 16,
-                Bottom = rotation == 90 || rotation == 270 ? lpSize.cx + 16 : lpSize.cy + 16
-            };
-            driver.FillRect(compatibleDc, ref rect, IntPtr.Zero);
-            int num3;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num3 = 0;
-                    break;
-                case 180:
-                    num3 = lpSize.cx;
-                    break;
-                default:
-                    num3 = lpSize.cy;
-                    break;
-            }
-            driver.TextOut_X_start = num3;
-            driver.TextOut_Y_start = rotation == 0 || rotation == 270 ? 0 : driver.iBitmapHeight;
-            driver.TextOut(compatibleDc, driver.TextOut_X_start, driver.TextOut_Y_start, content, content.Length);
-            driver.GetBitmapBits(bitmap, 5760000, driver.buf);
-            if (!driver.DeleteObject(driver.SelectObject(compatibleDc, hgdiobj)))
-            {
-                // int num4 = (int)MessageBox.Show("Select hFont=0", "title");
-            }
-            if (!driver.DeleteDC(compatibleDc))
-            {
-                // int num5 = (int)MessageBox.Show("hdcMem=0", "title");
-            }
-            if (!driver.DeleteObject(bitmap))
-            {
-                // int num6 = (int)MessageBox.Show("hBitmap=0", "title");
-            }
-            int num7;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num7 = x;
-                    break;
-                case 180:
-                    num7 = x - lpSize.cx;
-                    break;
-                default:
-                    num7 = x - lpSize.cy;
-                    break;
-            }
-            driver.iBitmapX = num7;
-            driver.iBitmapY = rotation == 0 || rotation == 270 ? y : y - driver.iBitmapHeight;
-            if (driver.iBitmapY < 0)
-            {
-                driver.iTop -= driver.iBitmapY;
-                driver.iBitmapY = 0;
-            }
-            if (driver.iBitmapX < 0)
-            {
-                driver.imgShiftX -= (driver.iBitmapX - 7) / 8;
-                driver.iBitmapX = 0;
-            }
-            string s = "BITMAP " + (object)driver.iBitmapX + "," + (object)driver.iBitmapY + "," + (object)(driver.iBitmapWidth - driver.imgShiftX) + "," + (object)(driver.iBitmapHeight - driver.iTop) + ",1,";
-            Encoding.UTF8.GetBytes(s);
-            driver.dwCount = s.Length;
-            driver.CRLFCount = driver.CRLF.Length;
-            driver.pBytes = Marshal.StringToCoTaskMemAnsi(s);
-            driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-            driver.WritePrinter(driver.hPrinter, driver.pBytes, driver.dwCount, out driver.dwWritten);
-            GC.Collect();
-            Encoding.Unicode.GetChars(driver.buf);
-            for (int iTop = driver.iTop; iTop < driver.iBitmapHeight; ++iTop)
-            {
-                int imgShiftX = driver.imgShiftX;
-                while (imgShiftX < driver.iBitmapWidth)
-                {
-                    byte[] numArray1 = new byte[300];
-                    Marshal.SizeOf((object)numArray1[0]);
-                    int length = numArray1.Length;
-                    IntPtr num8 = Marshal.AllocHGlobal(5760000);
-                    Marshal.Copy(driver.buf, iTop * 300, num8, 5760000 - iTop * 300);
-                    byte[] numArray2 = new byte[300];
-                    Marshal.Copy(num8, numArray2, 0, 300);
-                    driver.WritePrinter(driver.hPrinter, numArray2, driver.iBitmapWidth, out driver.dwWritten);
-                    imgShiftX += driver.iBitmapWidth;
-                    Marshal.FreeHGlobal(num8);
-                    GC.Collect();
-                }
-            }
-            driver.WritePrinter(driver.hPrinter, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-            Marshal.Release(bitmap);
-            Marshal.Release(compatibleDc);
-            Marshal.Release(dc);
-            Marshal.Release(driver.pBytes);
-            Marshal.Release(driver.CRLFBytes);
-            GC.Collect();
+                X = x,
+                Y = y,
+                Height = fontheight,
+                Rotation = rotation,
+                Style = fontstyle,
+                FaceName = szFaceName,
+                Content = content,
+                Unicode = false
+            });
         }
 
         public void windowsfontunicode(
@@ -958,132 +793,43 @@ namespace TSCSDK
           string szFaceName,
           string content)
         {
-            driver.LOGFONT lplf = new driver.LOGFONT();
-            driver.SIZE lpSize = new driver.SIZE();
-            lplf.lfWidth = 0;
-            lplf.lfEscapement = 0;
-            lplf.lfOrientation = 0;
-            lplf.lfCharSet = (byte)1;
-            lplf.lfOutPrecision = (byte)0;
-            lplf.lfClipPrecision = (byte)0;
-            lplf.lfQuality = (byte)1;
-            lplf.lfPitchAndFamily = (byte)26;
-            lplf.lfFaceName = szFaceName;
-            lplf.lfHeight = fontheight;
-            lplf.lfItalic = (byte)0;
-            lplf.lfUnderline = (byte)0;
-            lplf.lfStrikeOut = (byte)0;
-            lplf.lfWeight = fontstyle < 2 ? 400 : 700;
-            lplf.lfEscapement = rotation * 10;
-            IntPtr dc = driver.GetDC(IntPtr.Zero);
-            IntPtr compatibleDc = driver.CreateCompatibleDC(dc);
-            IntPtr bitmap = driver.CreateBitmap(2400, 2400, 1U, 1U, IntPtr.Zero);
-            driver.SelectObject(compatibleDc, bitmap);
-            IntPtr fontIndirect = driver.CreateFontIndirect(lplf);
-            IntPtr hgdiobj = driver.SelectObject(compatibleDc, fontIndirect);
-            driver.GetTextExtentPoint32W(compatibleDc, content, content.Length, out lpSize);
-            int num1 = (int)driver.SetTextColor(compatibleDc, ColorTranslator.ToWin32(Color.Black));
-            int num2 = (int)driver.SetBkColor(compatibleDc, ColorTranslator.ToWin32(Color.White));
-            driver.iBitmapWidth = rotation == 0 || rotation == 180 ? (lpSize.cx + 7) / 8 : (lpSize.cy + 7) / 8;
-            driver.iBitmapHeight = rotation == 90 || rotation == 270 ? lpSize.cx : lpSize.cy;
-            var rect = new driver.RECT()
+            SendWindowsFont(new WindowsFontRequest
             {
-                Left = 0,
-                Top = 0,
-                Right = rotation == 0 || rotation == 180 ? lpSize.cx + 16 : lpSize.cy + 16,
-                Bottom = rotation == 90 || rotation == 270 ? lpSize.cx + 16 : lpSize.cy + 16
-            };
-            driver.FillRect(compatibleDc, ref rect, IntPtr.Zero);
-            int num3;
-            switch (rotation)
+                X = x,
+                Y = y,
+                Height = fontheight,
+                Rotation = rotation,
+                Style = fontstyle,
+                FaceName = szFaceName,
+                Content = content,
+                Unicode = true
+            });
+        }
+
+        private void SendWindowsFont(WindowsFontRequest request)
+        {
+            // The openport/closeport caller owns this job and page. Capture its handle once;
+            // do not route through sendcommand, which starts a page and appends CRLF.
+            // fontunderline remains ignored, as in both public legacy implementations.
+            var printer = fontPrinterHandle();
+            WindowsFontCommand.Send(request, fontGdi,
+                (packet, offset, count) => WriteFontPacket(printer, packet, offset, count));
+        }
+
+        private int WriteFontPacket(IntPtr printer, byte[] packet, int offset, int count)
+        {
+            // The byte[] WritePrinter overload starts at index zero. After a partial write,
+            // copy only the remaining range; no pinned or unmanaged allocation is retained.
+            var bytes = packet;
+            if (offset != 0)
             {
-                case 0:
-                case 90:
-                    num3 = 0;
-                    break;
-                case 180:
-                    num3 = lpSize.cx;
-                    break;
-                default:
-                    num3 = lpSize.cy;
-                    break;
+                bytes = new byte[count];
+                Buffer.BlockCopy(packet, offset, bytes, 0, count);
             }
-            driver.TextOut_X_start = num3;
-            driver.TextOut_Y_start = rotation == 0 || rotation == 270 ? 0 : driver.iBitmapHeight;
-            driver.TextOutW(compatibleDc, driver.TextOut_X_start, driver.TextOut_Y_start, content, content.Length);
-            driver.GetBitmapBits(bitmap, 5760000, driver.buf);
-            if (!driver.DeleteObject(driver.SelectObject(compatibleDc, hgdiobj)))
-            {
-                // int num4 = (int)MessageBox.Show("Select hFont=0", "title");
-            }
-            if (!driver.DeleteDC(compatibleDc))
-            {
-                // int num5 = (int)MessageBox.Show("hdcMem=0", "title");
-            }
-            if (!driver.DeleteObject(bitmap))
-            {
-                // int num6 = (int)MessageBox.Show("hBitmap=0", "title");
-            }
-            int num7;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num7 = x;
-                    break;
-                case 180:
-                    num7 = x - lpSize.cx;
-                    break;
-                default:
-                    num7 = x - lpSize.cy;
-                    break;
-            }
-            driver.iBitmapX = num7;
-            driver.iBitmapY = rotation == 0 || rotation == 270 ? y : y - driver.iBitmapHeight;
-            if (driver.iBitmapY < 0)
-            {
-                driver.iTop -= driver.iBitmapY;
-                driver.iBitmapY = 0;
-            }
-            if (driver.iBitmapX < 0)
-            {
-                driver.imgShiftX -= (driver.iBitmapX - 7) / 8;
-                driver.iBitmapX = 0;
-            }
-            string s = "BITMAP " + (object)driver.iBitmapX + "," + (object)driver.iBitmapY + "," + (object)(driver.iBitmapWidth - driver.imgShiftX) + "," + (object)(driver.iBitmapHeight - driver.iTop) + ",1,";
-            Encoding.UTF8.GetBytes(s);
-            driver.dwCount = s.Length;
-            driver.CRLFCount = driver.CRLF.Length;
-            driver.pBytes = Marshal.StringToCoTaskMemAnsi(s);
-            driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-            driver.WritePrinter(driver.hPrinter, driver.pBytes, driver.dwCount, out driver.dwWritten);
-            GC.Collect();
-            Encoding.Unicode.GetChars(driver.buf);
-            for (int iTop = driver.iTop; iTop < driver.iBitmapHeight; ++iTop)
-            {
-                int imgShiftX = driver.imgShiftX;
-                while (imgShiftX < driver.iBitmapWidth)
-                {
-                    byte[] numArray1 = new byte[300];
-                    Marshal.SizeOf((object)numArray1[0]);
-                    int length = numArray1.Length;
-                    IntPtr num8 = Marshal.AllocHGlobal(5760000);
-                    Marshal.Copy(driver.buf, iTop * 300, num8, 5760000 - iTop * 300);
-                    byte[] numArray2 = new byte[300];
-                    Marshal.Copy(num8, numArray2, 0, 300);
-                    driver.WritePrinter(driver.hPrinter, numArray2, driver.iBitmapWidth, out driver.dwWritten);
-                    imgShiftX += driver.iBitmapWidth;
-                    Marshal.FreeHGlobal(num8);
-                    GC.Collect();
-                }
-            }
-            driver.WritePrinter(driver.hPrinter, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-            Marshal.Release(bitmap);
-            Marshal.Release(compatibleDc);
-            Marshal.Release(dc);
-            Marshal.Release(driver.pBytes);
-            Marshal.Release(driver.CRLFBytes);
-            GC.Collect();
+            int written;
+            if (!fontPrinterWrite(printer, bytes, count, out written))
+                throw new Win32Exception(Marshal.GetLastWin32Error(), "WritePrinter failed while sending a font bitmap.");
+            return written;
         }
 
         public void printphoto(int xpoint, int ypoint, string filename)
