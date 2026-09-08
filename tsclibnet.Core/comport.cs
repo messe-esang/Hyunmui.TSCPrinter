@@ -1,4 +1,4 @@
-﻿// Decompiled with JetBrains decompiler
+// Decompiled with JetBrains decompiler
 // Type: TSCSDK.comport
 // Assembly: tsclibnet, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
 // MVID: A64385FF-5635-48AA-8C98-BF7EE2302ADD
@@ -20,9 +20,15 @@ namespace TSCSDK
     public class comport
     {
         private static SerialPort _serialPort;
-        private static Thread receivethread = (Thread)null;
-        private static string receivestring;
-        private static int receivestatus = 0;
+        private readonly SerialQuery serialQuery = CreateSerialQuery();
+
+        internal comport(SerialQuery query) : this()
+        {
+            serialQuery = query;
+        }
+
+        private static SerialQuery CreateSerialQuery() => new SerialQuery(() => new SerialQueryPort(_serialPort));
+
         private static string CRLF = "\r\n";
         private static byte[] CRLF_byte = new byte[2]
         {
@@ -33,9 +39,6 @@ namespace TSCSDK
         private const int CLIP_DEFAULT_PRECIS = 0;
         private const int BUFFER_WIDTH = 2400;
         private const int BUFFER_HEIGHT = 2400;
-        private static string byte_to_string = "";
-        private static byte[] readbuffer = new byte[1024];
-        private static string read_data = "";
 
         [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr CreateFontIndirect([MarshalAs(UnmanagedType.LPStruct), In] comport.LOGFONT lplf);
@@ -125,7 +128,6 @@ namespace TSCSDK
                 comport._serialPort.StopBits = StopBits.Two;
             comport._serialPort.Handshake = Handshake.XOnXOff;
             comport._serialPort.RtsEnable = true;
-            comport._serialPort.DataReceived += new SerialDataReceivedEventHandler(comport.DataReceivedHandler);
             comport._serialPort.ReadTimeout = 2000;
             comport._serialPort.WriteTimeout = 2000;
             try
@@ -139,10 +141,6 @@ namespace TSCSDK
             }
         }
 
-        private static void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
-        {
-            comport.read_data = ((SerialPort)sender).ReadExisting();
-        }
 
         public static void sendcommand(string command)
         {
@@ -235,21 +233,7 @@ namespace TSCSDK
 
         public static string sendcommand_getstring(string command)
         {
-            byte[] bytes1 = Encoding.ASCII.GetBytes(command);
-            byte[] bytes2 = Encoding.ASCII.GetBytes(comport.CRLF);
-            byte[] bytes3 = Encoding.Default.GetBytes("OUT \"ENDLINE\"\r\n");
-            comport._serialPort.Write(bytes1, 0, bytes1.Length);
-            comport._serialPort.Write(bytes2, 0, bytes2.Length);
-            comport._serialPort.Write(bytes3, 0, bytes3.Length);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.Read_judge));
-            comport.receivethread.Start();
-            do
-            {
-                Thread.Sleep(100);
-            }
-            while (comport.receivestatus != 1);
-            return comport.byte_to_string;
+            return CreateSerialQuery().QueryFramed(command);
         }
 
         public static int sendcommandNOCRLF(string command)
@@ -428,223 +412,57 @@ namespace TSCSDK
 
         public static void readstream()
         {
-            byte[] numArray = new byte[256];
-            string str = "";
-label_1:
-            try
-            {
-                int count = comport._serialPort.Read(numArray, 0, numArray.Length);
-                if (count > 0)
-                {
-                    comport.receivestring = str + Encoding.ASCII.GetString(numArray, 0, count);
-                    comport.receivestatus = 1;
-                }
-                else
-                    goto label_1;
-            }
-            catch (TimeoutException ex)
-            {
-            }
+            CreateSerialQuery().ReadLegacy(null);
         }
 
         public static void Read_judge()
         {
-            string oldValue = "ENDLINE\r\n";
-            comport.byte_to_string = "";
-            comport.readbuffer = new byte[1024];
-            comport.receivestatus = 0;
-label_1:
-            try
-            {
-                int num = comport._serialPort.Read(comport.readbuffer, 0, comport.readbuffer.Length);
-                if (num > 0)
-                {
-                    for (int index = 0; index <= num; ++index)
-                    {
-                        if (comport.byte_to_string.Contains(oldValue))
-                        {
-                            comport.receivestatus = 1;
-                            comport.byte_to_string = comport.byte_to_string.Replace(oldValue, "");
-                            return;
-                        }
-                        comport.byte_to_string += Convert.ToChar(comport.readbuffer[index]).ToString();
-                    }
-                    goto label_1;
-                }
-                else
-                    goto label_1;
-            }
-            catch (TimeoutException ex)
-            {
-            }
+            CreateSerialQuery().ReadLegacy("ENDLINE\r\n");
         }
 
         public static void Read_judge_fixedstring()
         {
-            byte num1 = 6;
-            byte[] buffer = new byte[256];
-            comport.readbuffer = new byte[1024];
-label_1:
-            try
-            {
-                int num2 = comport._serialPort.Read(buffer, 0, buffer.Length);
-                if (num2 > 0)
-                {
-                    for (int index = 0; index <= num2 - 1; ++index)
-                    {
-                        if ((int)comport.readbuffer[index] == (int)num1)
-                        {
-                            comport.receivestatus = 1;
-                            return;
-                        }
-                        comport.byte_to_string += Convert.ToChar(comport.readbuffer[index]).ToString();
-                    }
-                    goto label_1;
-                }
-                else
-                    goto label_1;
-            }
-            catch (TimeoutException ex)
-            {
-            }
+            CreateSerialQuery().ReadLegacy("\u0006");
         }
 
         public byte printerstatus()
         {
-            byte[] numArray = new byte[256];
-            byte[] buffer = new byte[3]
-            {
-        (byte) 27,
-        (byte) 33,
-        (byte) 63
-            };
-            string str = "";
-            comport._serialPort.Write(buffer, 0, buffer.Length);
-            Thread.Sleep(300);
-label_1:
-            try
-            {
-                int count = comport._serialPort.Read(numArray, 0, numArray.Length);
-                if (count > 0)
-                {
-                    comport.receivestring = str + Encoding.ASCII.GetString(numArray, 0, count);
-                    return numArray[0];
-                }
-                goto label_1;
-            }
-            catch (TimeoutException ex)
-            {
-            }
-            return numArray[0];
+            return serialQuery.QueryStatus();
         }
 
         public string printerfullstatus()
         {
-            byte[] numArray = new byte[256];
-            byte[] buffer = new byte[3]
-            {
-        (byte) 27,
-        (byte) 33,
-        (byte) 83
-            };
-            comport._serialPort.Write(buffer, 0, buffer.Length);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.readstream));
-            comport.receivethread.Start();
-            do
-                ;
-            while (comport.receivestatus != 1);
-            return comport.receivestring;
+            return serialQuery.QueryFullStatus();
         }
 
         public string printercodepage()
         {
-            byte[] numArray = new byte[256];
-            string str = "~!I";
-            Encoding.ASCII.GetBytes(str);
-            comport._serialPort.WriteLine(str);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.readstream));
-            comport.receivethread.Start();
-            do
-                ;
-            while (comport.receivestatus != 1);
-            return comport.receivestring;
+            return serialQuery.QueryLine("~!I");
         }
 
         public string printername()
         {
-            byte[] numArray = new byte[256];
-            string str = "~!T";
-            Encoding.ASCII.GetBytes(str);
-            comport._serialPort.WriteLine(str);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.readstream));
-            comport.receivethread.Start();
-            do
-                ;
-            while (comport.receivestatus != 1);
-            return comport.receivestring;
+            return serialQuery.QueryLine("~!T");
         }
 
         public string printermileage()
         {
-            byte[] numArray = new byte[256];
-            string str = "~!@";
-            Encoding.ASCII.GetBytes(str);
-            comport._serialPort.WriteLine(str);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.readstream));
-            comport.receivethread.Start();
-            do
-                ;
-            while (comport.receivestatus != 1);
-            return comport.receivestring;
+            return serialQuery.QueryLine("~!@");
         }
 
         public string printermemory()
         {
-            byte[] numArray = new byte[256];
-            string str = "~!A";
-            Encoding.ASCII.GetBytes(str);
-            comport._serialPort.WriteLine(str);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.readstream));
-            comport.receivethread.Start();
-            do
-                ;
-            while (comport.receivestatus != 1);
-            return comport.receivestring;
+            return serialQuery.QueryLine("~!A");
         }
 
         public string printerfile()
         {
-            byte[] numArray = new byte[256];
-            string str = "~!F";
-            Encoding.ASCII.GetBytes(str);
-            comport._serialPort.WriteLine(str);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.readstream));
-            comport.receivethread.Start();
-            do
-                ;
-            while (comport.receivestatus != 1);
-            return comport.receivestring;
+            return serialQuery.QueryLine("~!F");
         }
 
         public string printerserial()
         {
-            byte[] numArray = new byte[256];
-            string str = "OUT _SERIAL$\r\n";
-            Encoding.ASCII.GetBytes(str);
-            comport._serialPort.WriteLine(str);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.readstream));
-            comport.receivethread.Start();
-            do
-                ;
-            while (comport.receivestatus != 1);
-            return comport.receivestring;
+            return serialQuery.QueryLine("OUT _SERIAL$\r\n");
         }
 
         public void printerrestart()
@@ -691,8 +509,14 @@ label_1:
         {
             SendWindowsFont(new WindowsFontRequest
             {
-                X = x, Y = y, Height = fontheight, Rotation = rotation,
-                Style = fontstyle, FaceName = szFaceName, Content = content, Unicode = false
+                X = x,
+                Y = y,
+                Height = fontheight,
+                Rotation = rotation,
+                Style = fontstyle,
+                FaceName = szFaceName,
+                Content = content,
+                Unicode = false
             });
         }
 
@@ -708,8 +532,14 @@ label_1:
         {
             SendWindowsFont(new WindowsFontRequest
             {
-                X = x, Y = y, Height = fontheight, Rotation = rotation,
-                Style = fontstyle, FaceName = szFaceName, Content = content, Unicode = true
+                X = x,
+                Y = y,
+                Height = fontheight,
+                Rotation = rotation,
+                Style = fontstyle,
+                FaceName = szFaceName,
+                Content = content,
+                Unicode = true
             });
         }
 
