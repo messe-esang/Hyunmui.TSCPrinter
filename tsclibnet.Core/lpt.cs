@@ -42,7 +42,6 @@ namespace TSCSDK
       (byte) 13,
       (byte) 10
         };
-        private static byte[] buffer = new byte[2048];
         private const int OUT_DEFAULT_PRECIS = 0;
         private const int CLIP_DEFAULT_PRECIS = 0;
         private const int BUFFER_WIDTH = 2400;
@@ -90,8 +89,8 @@ namespace TSCSDK
         {
             if (this.lptstream == null)
                 Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
-            lpt.buffer = Encoding.ASCII.GetBytes(command);
-            this.lptstream.Write(lpt.buffer, 0, lpt.buffer.Length);
+            byte[] buffer = Encoding.ASCII.GetBytes(command);
+            this.lptstream.Write(buffer, 0, buffer.Length);
             this.lptstream.Write(lpt.CRLF_byte, 0, lpt.CRLF_byte.Length);
         }
 
@@ -159,8 +158,8 @@ namespace TSCSDK
         {
             if (this.lptstream == null)
                 Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
-            lpt.buffer = Encoding.UTF8.GetBytes(command);
-            this.lptstream.Write(lpt.buffer, 0, lpt.buffer.Length);
+            byte[] buffer = Encoding.UTF8.GetBytes(command);
+            this.lptstream.Write(buffer, 0, buffer.Length);
             this.lptstream.Write(lpt.CRLF_byte, 0, lpt.CRLF_byte.Length);
         }
 
@@ -168,8 +167,8 @@ namespace TSCSDK
         {
             if (this.lptstream == null)
                 Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
-            lpt.buffer = Encoding.GetEncoding("gb2312").GetBytes(command);
-            this.lptstream.Write(lpt.buffer, 0, lpt.buffer.Length);
+            byte[] buffer = Encoding.GetEncoding("gb2312").GetBytes(command);
+            this.lptstream.Write(buffer, 0, buffer.Length);
             this.lptstream.Write(lpt.CRLF_byte, 0, lpt.CRLF_byte.Length);
         }
 
@@ -177,8 +176,8 @@ namespace TSCSDK
         {
             if (this.lptstream == null)
                 Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
-            lpt.buffer = Encoding.GetEncoding("big5").GetBytes(command);
-            this.lptstream.Write(lpt.buffer, 0, lpt.buffer.Length);
+            byte[] buffer = Encoding.GetEncoding("big5").GetBytes(command);
+            this.lptstream.Write(buffer, 0, buffer.Length);
             this.lptstream.Write(lpt.CRLF_byte, 0, lpt.CRLF_byte.Length);
         }
 
@@ -189,8 +188,8 @@ namespace TSCSDK
                 Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
                 return 0;
             }
-            lpt.buffer = Encoding.UTF8.GetBytes(command);
-            this.lptstream.Write(lpt.buffer, 0, lpt.buffer.Length);
+            byte[] buffer = Encoding.UTF8.GetBytes(command);
+            this.lptstream.Write(buffer, 0, buffer.Length);
             return 1;
         }
 

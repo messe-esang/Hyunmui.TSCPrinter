@@ -115,6 +115,99 @@ namespace Hyunmui.TSCPrinter.Tests
             Assert.Equal(0, native.OwnedHandles);
         }
 
+        [Theory]
+        [InlineData("ascii")]
+        [InlineData("utf8")]
+        [InlineData("gb2312")]
+        [InlineData("big5")]
+        [InlineData("noCrLf")]
+        public void StringCommandsPreserveConfiguredEncodingAndFraming(string method)
+        {
+            using var stream = new MemoryFileStream();
+            var transport = new lpt(stream, new FakeGdi());
+            const string command = "A\0한中文\r\n";
+            var encoding = GetCommandEncoding(method);
+            if (encoding == null)
+            {
+                Assert.Throws<ArgumentException>(() => SendStringCommand(transport, method, command));
+                Assert.Equal(0, stream.WriteCalls);
+                return;
+            }
+            Assert.Equal(1, SendStringCommand(transport, method, command));
+            var expected = encoding.GetBytes(command);
+            Assert.Equal(method == "noCrLf" ? expected : expected.Concat(new byte[] { 13, 10 }), stream.Bytes);
+            Assert.Equal(method == "noCrLf" ? 1 : 2, stream.WriteCalls);
+            Assert.True(stream.CanWrite);
+        }
+
+        [Theory]
+        [InlineData("ascii")]
+        [InlineData("utf8")]
+        [InlineData("gb2312")]
+        [InlineData("big5")]
+        [InlineData("noCrLf")]
+        public void StringCommandsPreserveEncodingAndWriteFailures(string method)
+        {
+            using var stream = new MemoryFileStream();
+            var transport = new lpt(stream, new FakeGdi());
+            var failure = new IOException("write failure");
+            stream.OnWrite = () => throw failure;
+            if (GetCommandEncoding(method) == null)
+            {
+                Assert.Throws<ArgumentException>(() => SendStringCommand(transport, method, "A"));
+                Assert.Equal(0, stream.WriteCalls);
+            }
+            else
+            {
+                Assert.Same(failure, Assert.Throws<IOException>(() => SendStringCommand(transport, method, "A")));
+                Assert.Equal(1, stream.WriteCalls);
+                Assert.Empty(stream.Bytes);
+            }
+            Assert.True(stream.CanWrite);
+        }
+
+        [Fact]
+        public void InterleavedStringCommandsKeepIndependentInstanceBytes()
+        {
+            using var firstStream = new MemoryFileStream();
+            using var secondStream = new MemoryFileStream();
+            var first = new lpt(firstStream, new FakeGdi());
+            var second = new lpt(secondStream, new FakeGdi());
+            var reentered = false;
+            firstStream.OnWrite = () =>
+            {
+                if (reentered) return;
+                reentered = true;
+                Assert.Equal(1, second.sendcommandNOCRLF("longer 한글 command"));
+            };
+            first.sendcommand("A");
+            first.sendcommand_utf8("한");
+            Assert.Equal(Encoding.UTF8.GetBytes("A\r\n한\r\n"), firstStream.Bytes);
+            Assert.Equal(Encoding.UTF8.GetBytes("longer 한글 command"), secondStream.Bytes);
+        }
+
+        private static Encoding? GetCommandEncoding(string method)
+        {
+            if (method == "ascii") return Encoding.ASCII;
+            if (method == "utf8" || method == "noCrLf") return Encoding.UTF8;
+            try { return Encoding.GetEncoding(method); }
+            catch (ArgumentException) { return null; }
+        }
+
+        private static int SendStringCommand(lpt transport, string method, string command)
+        {
+            switch (method)
+            {
+                case "ascii": transport.sendcommand(command); break;
+                case "utf8": transport.sendcommand_utf8(command); break;
+                case "gb2312": transport.sendcommand_gb2312(command); break;
+                case "big5": transport.sendcommand_big5(command); break;
+                case "noCrLf": return transport.sendcommandNOCRLF(command);
+                default: throw new ArgumentOutOfRangeException(nameof(method));
+            }
+            return 1;
+        }
+
         private static byte[] Packet(string header, params byte[] payload) => Encoding.ASCII.GetBytes(header).Concat(payload).Concat(new byte[] { 13, 10 }).ToArray();
 
         private static void Send(lpt transport, bool unicode, int rotation, int x, int y)
