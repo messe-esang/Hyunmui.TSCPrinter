@@ -1,4 +1,4 @@
-﻿// Decompiled with JetBrains decompiler
+// Decompiled with JetBrains decompiler
 // Type: TSCSDK.driver
 // Assembly: tsclibnet, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
 // MVID: A64385FF-5635-48AA-8C98-BF7EE2302ADD
@@ -28,7 +28,6 @@ namespace TSCSDK
         private static IntPtr hPrinter3;
         private static IntPtr hPrinter4;
         private static IntPtr hPrinter5;
-        private static string CRLF = "\r\n";
         private static byte[] CRLF_byte = new byte[2]
         {
       (byte) 13,
@@ -38,12 +37,29 @@ namespace TSCSDK
         private const int CLIP_DEFAULT_PRECIS = 0;
         private const int BUFFER_WIDTH = 2400;
         private const int BUFFER_HEIGHT = 2400;
-        private static int dwCount;
-        private static int CRLFCount;
         private static int dwWritten = 0;
-        private static IntPtr pBytes;
-        private static IntPtr CRLFBytes;
 
+        private readonly DriverCommandWriter commandWriter = new DriverCommandWriter(
+            GetCommandPrinter, StartPagePrinter, WritePrinter, new DriverAnsiEncoding().GetBytes);
+
+        internal driver(DriverCommandWriter writer) : this()
+        {
+            commandWriter = writer;
+        }
+
+        private static IntPtr GetCommandPrinter(int port)
+        {
+            switch (port)
+            {
+                case 0: return hPrinter;
+                case 1: return hPrinter1;
+                case 2: return hPrinter2;
+                case 3: return hPrinter3;
+                case 4: return hPrinter4;
+                case 5: return hPrinter5;
+                default: throw new ArgumentOutOfRangeException(nameof(port));
+            }
+        }
         internal delegate bool FontPrinterWrite(IntPtr printer, byte[] bytes, int count, out int written);
         private readonly IWindowsFontGdi fontGdi;
         private readonly Func<IntPtr> fontPrinterHandle;
@@ -75,13 +91,6 @@ namespace TSCSDK
 
         [DllImport("winspool.Drv", CallingConvention = CallingConvention.StdCall, SetLastError = true)]
         private static extern bool EndPagePrinter(IntPtr hPrinter);
-
-        [DllImport("winspool.Drv", CallingConvention = CallingConvention.StdCall, SetLastError = true)]
-        private static extern bool WritePrinter(
-          IntPtr hPrinter,
-          IntPtr pBytes,
-          int dwCount,
-          out int dwWritten);
 
         [DllImport("winspool.Drv", CallingConvention = CallingConvention.StdCall, SetLastError = true)]
         private static extern bool WritePrinter(
@@ -249,18 +258,7 @@ namespace TSCSDK
 
         public bool sendcommand(string command)
         {
-            driver.dwCount = command.Length;
-            driver.CRLFCount = driver.CRLF.Length;
-            driver.pBytes = Marshal.StringToCoTaskMemAnsi(command);
-            driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-            if (driver.StartPagePrinter(driver.hPrinter))
-            {
-                driver.WritePrinter(driver.hPrinter, driver.pBytes, driver.dwCount, out driver.dwWritten);
-                driver.WritePrinter(driver.hPrinter, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-                return true;
-            }
-            Marshal.FreeCoTaskMem(driver.pBytes);
-            return false;
+            return commandWriter.SendAnsi(0, command, true);
         }
 
         public void sendcommand(string[] command)
@@ -320,237 +318,49 @@ namespace TSCSDK
 
         public bool sendcommand_utf8(string command)
         {
-            byte[] bytes = Encoding.UTF8.GetBytes(command);
-            driver.dwCount = bytes.Length;
-            driver.CRLFCount = driver.CRLF.Length;
-            driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-            if (driver.StartPagePrinter(driver.hPrinter))
-            {
-                driver.WritePrinter(driver.hPrinter, bytes, driver.dwCount, out driver.dwWritten);
-                driver.WritePrinter(driver.hPrinter, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-                return true;
-            }
-            Marshal.FreeCoTaskMem(driver.CRLFBytes);
-            return false;
+            return commandWriter.Send(0, Encoding.UTF8.GetBytes(command), true);
         }
 
         public bool sendcommand_gb2312(string command)
         {
-            byte[] bytes = Encoding.GetEncoding("gb2312").GetBytes(command);
-            driver.dwCount = bytes.Length;
-            driver.CRLFCount = driver.CRLF.Length;
-            driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-            if (driver.StartPagePrinter(driver.hPrinter))
-            {
-                driver.WritePrinter(driver.hPrinter, bytes, driver.dwCount, out driver.dwWritten);
-                driver.WritePrinter(driver.hPrinter, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-                return true;
-            }
-            Marshal.FreeCoTaskMem(driver.CRLFBytes);
-            return false;
+            return commandWriter.Send(0, Encoding.GetEncoding("gb2312").GetBytes(command), true);
         }
 
         public bool sendcommand_big5(string command)
         {
-            byte[] bytes = Encoding.GetEncoding("big5").GetBytes(command);
-            driver.dwCount = bytes.Length;
-            driver.CRLFCount = driver.CRLF.Length;
-            driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-            if (driver.StartPagePrinter(driver.hPrinter))
-            {
-                driver.WritePrinter(driver.hPrinter, bytes, driver.dwCount, out driver.dwWritten);
-                driver.WritePrinter(driver.hPrinter, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-                return true;
-            }
-            Marshal.FreeCoTaskMem(driver.CRLFBytes);
-            return false;
+            return commandWriter.Send(0, Encoding.GetEncoding("big5").GetBytes(command), true);
         }
 
         public bool sendcommand_mult(int portnumber, string command)
         {
-            switch (portnumber)
-            {
-                case 1:
-                    driver.dwCount = command.Length;
-                    driver.CRLFCount = driver.CRLF.Length;
-                    driver.pBytes = Marshal.StringToCoTaskMemAnsi(command);
-                    driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-                    if (driver.StartPagePrinter(driver.hPrinter1))
-                    {
-                        driver.WritePrinter(driver.hPrinter1, driver.pBytes, driver.dwCount, out driver.dwWritten);
-                        driver.WritePrinter(driver.hPrinter1, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-                        return true;
-                    }
-                    Marshal.FreeCoTaskMem(driver.pBytes);
-                    return false;
-                case 2:
-                    driver.dwCount = command.Length;
-                    driver.CRLFCount = driver.CRLF.Length;
-                    driver.pBytes = Marshal.StringToCoTaskMemAnsi(command);
-                    driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-                    if (driver.StartPagePrinter(driver.hPrinter1))
-                    {
-                        driver.WritePrinter(driver.hPrinter1, driver.pBytes, driver.dwCount, out driver.dwWritten);
-                        driver.WritePrinter(driver.hPrinter1, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-                        return true;
-                    }
-                    Marshal.FreeCoTaskMem(driver.pBytes);
-                    return false;
-                case 3:
-                    driver.dwCount = command.Length;
-                    driver.CRLFCount = driver.CRLF.Length;
-                    driver.pBytes = Marshal.StringToCoTaskMemAnsi(command);
-                    driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-                    if (driver.StartPagePrinter(driver.hPrinter3))
-                    {
-                        driver.WritePrinter(driver.hPrinter3, driver.pBytes, driver.dwCount, out driver.dwWritten);
-                        driver.WritePrinter(driver.hPrinter3, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-                        return true;
-                    }
-                    Marshal.FreeCoTaskMem(driver.pBytes);
-                    return false;
-                case 4:
-                    driver.dwCount = command.Length;
-                    driver.CRLFCount = driver.CRLF.Length;
-                    driver.pBytes = Marshal.StringToCoTaskMemAnsi(command);
-                    driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-                    if (driver.StartPagePrinter(driver.hPrinter4))
-                    {
-                        driver.WritePrinter(driver.hPrinter4, driver.pBytes, driver.dwCount, out driver.dwWritten);
-                        driver.WritePrinter(driver.hPrinter4, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-                        return true;
-                    }
-                    Marshal.FreeCoTaskMem(driver.pBytes);
-                    return false;
-                case 5:
-                    driver.dwCount = command.Length;
-                    driver.CRLFCount = driver.CRLF.Length;
-                    driver.pBytes = Marshal.StringToCoTaskMemAnsi(command);
-                    driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-                    if (driver.StartPagePrinter(driver.hPrinter5))
-                    {
-                        driver.WritePrinter(driver.hPrinter5, driver.pBytes, driver.dwCount, out driver.dwWritten);
-                        driver.WritePrinter(driver.hPrinter5, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-                        return true;
-                    }
-                    Marshal.FreeCoTaskMem(driver.pBytes);
-                    return false;
-                default:
-                    return false;
-            }
+            if (portnumber < 1 || portnumber > 5) return false;
+            return commandWriter.SendAnsi(portnumber, command, true);
         }
 
         public int sendcommandNOCRLF(string command)
         {
-            driver.dwCount = command.Length;
-            driver.CRLFCount = driver.CRLF.Length;
-            driver.pBytes = Marshal.StringToCoTaskMemAnsi(command);
-            driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-            if (driver.StartPagePrinter(driver.hPrinter))
-            {
-                driver.WritePrinter(driver.hPrinter, driver.pBytes, driver.dwCount, out driver.dwWritten);
-                return 1;
-            }
-            Marshal.FreeCoTaskMem(driver.pBytes);
-            return -1;
+            return commandWriter.SendAnsi(0, command, false) ? 1 : -1;
         }
 
         public bool sendbinary(byte[] command)
         {
-            driver.dwCount = command.Length;
-            driver.CRLFCount = driver.CRLF.Length;
-            driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-            if (!driver.StartPagePrinter(driver.hPrinter))
-                return false;
-            driver.WritePrinter(driver.hPrinter, command, driver.dwCount, out driver.dwWritten);
-            driver.WritePrinter(driver.hPrinter, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-            return true;
+            return sendcommand(command);
         }
 
         public bool sendcommand(byte[] command)
         {
-            driver.dwCount = command.Length;
-            driver.CRLFCount = driver.CRLF.Length;
-            driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-            if (!driver.StartPagePrinter(driver.hPrinter))
-                return false;
-            driver.WritePrinter(driver.hPrinter, command, driver.dwCount, out driver.dwWritten);
-            driver.WritePrinter(driver.hPrinter, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-            return true;
+            return commandWriter.Send(0, command, true);
         }
 
         public bool sendcommand_mult(int portnumber, byte[] command)
         {
-            switch (portnumber)
-            {
-                case 1:
-                    driver.dwCount = command.Length;
-                    driver.CRLFCount = driver.CRLF.Length;
-                    driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-                    if (driver.StartPagePrinter(driver.hPrinter1))
-                    {
-                        driver.WritePrinter(driver.hPrinter1, command, driver.dwCount, out driver.dwWritten);
-                        driver.WritePrinter(driver.hPrinter1, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-                        return true;
-                    }
-                    break;
-                case 2:
-                    driver.dwCount = command.Length;
-                    driver.CRLFCount = driver.CRLF.Length;
-                    driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-                    if (driver.StartPagePrinter(driver.hPrinter2))
-                    {
-                        driver.WritePrinter(driver.hPrinter2, command, driver.dwCount, out driver.dwWritten);
-                        driver.WritePrinter(driver.hPrinter2, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-                        return true;
-                    }
-                    break;
-                case 3:
-                    driver.dwCount = command.Length;
-                    driver.CRLFCount = driver.CRLF.Length;
-                    driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-                    if (driver.StartPagePrinter(driver.hPrinter3))
-                    {
-                        driver.WritePrinter(driver.hPrinter3, command, driver.dwCount, out driver.dwWritten);
-                        driver.WritePrinter(driver.hPrinter3, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-                        return true;
-                    }
-                    break;
-                case 4:
-                    driver.dwCount = command.Length;
-                    driver.CRLFCount = driver.CRLF.Length;
-                    driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-                    if (driver.StartPagePrinter(driver.hPrinter4))
-                    {
-                        driver.WritePrinter(driver.hPrinter4, command, driver.dwCount, out driver.dwWritten);
-                        driver.WritePrinter(driver.hPrinter4, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-                        return true;
-                    }
-                    break;
-                case 5:
-                    driver.dwCount = command.Length;
-                    driver.CRLFCount = driver.CRLF.Length;
-                    driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-                    if (driver.StartPagePrinter(driver.hPrinter5))
-                    {
-                        driver.WritePrinter(driver.hPrinter5, command, driver.dwCount, out driver.dwWritten);
-                        driver.WritePrinter(driver.hPrinter5, driver.CRLFBytes, driver.CRLFCount, out driver.dwWritten);
-                        return true;
-                    }
-                    break;
-            }
-            return false;
+            if (portnumber < 1 || portnumber > 5) return false;
+            return commandWriter.Send(portnumber, command, true);
         }
 
         public bool sendcommandNOCRLF(byte[] command)
         {
-            driver.dwCount = command.Length;
-            driver.CRLFCount = driver.CRLF.Length;
-            driver.CRLFBytes = Marshal.StringToCoTaskMemAnsi(driver.CRLF);
-            if (!driver.StartPagePrinter(driver.hPrinter))
-                return false;
-            driver.WritePrinter(driver.hPrinter, command, driver.dwCount, out driver.dwWritten);
-            return true;
+            return commandWriter.Send(0, command, false);
         }
 
         public bool closeport()
