@@ -1,4 +1,4 @@
-﻿// Decompiled with JetBrains decompiler
+// Decompiled with JetBrains decompiler
 // Type: TSCSDK.comport
 // Assembly: tsclibnet, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
 // MVID: A64385FF-5635-48AA-8C98-BF7EE2302ADD
@@ -20,57 +20,27 @@ namespace TSCSDK
     public class comport
     {
         private static SerialPort _serialPort;
-        private static Thread receivethread = (Thread)null;
-        private static string receivestring;
-        private static int receivestatus = 0;
+        private readonly SerialQuery serialQuery = CreateSerialQuery();
+
+        internal comport(SerialQuery query) : this()
+        {
+            serialQuery = query;
+        }
+
+        private static SerialQuery CreateSerialQuery() => new SerialQuery(() => new SerialQueryPort(_serialPort));
+
         private static string CRLF = "\r\n";
         private static byte[] CRLF_byte = new byte[2]
         {
       (byte) 13,
       (byte) 10
         };
-        private static int iTop = 0;
-        private static int iBitmapWidth;
-        private static int iBitmapHeight;
-        private static int iBitmapX;
-        private static int iBitmapY;
-        private static int TextOut_X_start;
-        private static int TextOut_Y_start;
-        private static byte[] buf = new byte[5760000];
-        private static int imgShiftX = 0;
-        private const int OUT_DEFAULT_PRECIS = 0;
-        private const int CLIP_DEFAULT_PRECIS = 0;
-        private const int BUFFER_WIDTH = 2400;
-        private const int BUFFER_HEIGHT = 2400;
-        private static string byte_to_string = "";
-        private static byte[] readbuffer = new byte[1024];
-        private static string read_data = "";
 
         [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr CreateFontIndirect([MarshalAs(UnmanagedType.LPStruct), In] comport.LOGFONT lplf);
 
-        [DllImport("gdi32.dll", SetLastError = true)]
-        private static extern IntPtr CreateCompatibleDC([In] IntPtr hdc);
-
-        [DllImport("gdi32.dll")]
-        private static extern IntPtr CreateBitmap(
-          int nWidth,
-          int nHeight,
-          uint cPlanes,
-          uint cBitsPerPel,
-          IntPtr lpvBits);
-
         [DllImport("gdi32.dll")]
         public static extern IntPtr SelectObject([In] IntPtr hdc, [In] IntPtr hgdiobj);
-
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr GetDC(IntPtr hWnd);
-
-        [DllImport("gdi32.dll")]
-        private static extern uint SetTextColor(IntPtr hdc, int crColor);
-
-        [DllImport("gdi32.dll")]
-        private static extern uint SetBkColor(IntPtr hdc, int crColor);
 
         [DllImport("gdi32.dll")]
         private static extern bool Rectangle(
@@ -80,48 +50,12 @@ namespace TSCSDK
           int nRightRect,
           int nBottomRect);
 
-        [DllImport("user32.dll")]
-        private static extern int FillRect(IntPtr hDC, [In] ref comport.RECT lprc, IntPtr hbr);
-
-        [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
-        private static extern bool TextOut(
-          IntPtr hdc,
-          int nXStart,
-          int nYStart,
-          string lpString,
-          int cbString);
-
-        [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
-        private static extern bool TextOutW(
-          IntPtr hdc,
-          int nXStart,
-          int nYStart,
-          string lpWString,
-          int cbString);
-
-        [DllImport("gdi32.dll")]
-        private static extern int GetBitmapBits(IntPtr hbmp, int cbBuffer, [Out] byte[] lpvBits);
-
         [DllImport("gdi32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool DeleteObject([In] IntPtr hObject);
 
         [DllImport("gdi32.dll")]
         public static extern bool DeleteDC([In] IntPtr hdc);
-
-        [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
-        private static extern bool GetTextExtentPoint32(
-          IntPtr hdc,
-          string lpString,
-          int cbString,
-          out comport.SIZE lpSize);
-
-        [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
-        private static extern bool GetTextExtentPoint32W(
-          IntPtr hdc,
-          string lpWString,
-          int cbString,
-          out comport.SIZE lpSize);
 
         public bool openport(
           string portnumber,
@@ -170,44 +104,9 @@ namespace TSCSDK
           string databit,
           string stopbit)
         {
-            comport._serialPort = new SerialPort(portnumber);
-            comport._serialPort.BaudRate = int.Parse(baudrate);
-            if (parity.ToUpper() == "N")
-                comport._serialPort.Parity = Parity.None;
-            else if (parity.ToUpper() == "O")
-                comport._serialPort.Parity = Parity.Odd;
-            else if (parity.ToUpper() == "E")
-                comport._serialPort.Parity = Parity.Even;
-            if (databit.ToUpper() == "8")
-                comport._serialPort.DataBits = 8;
-            else if (databit.ToUpper() == "7")
-                comport._serialPort.DataBits = 7;
-            if (stopbit.ToUpper() == "1")
-                comport._serialPort.StopBits = StopBits.One;
-            else if (stopbit.ToUpper() == "1.5")
-                comport._serialPort.StopBits = StopBits.OnePointFive;
-            else if (stopbit.ToUpper() == "2")
-                comport._serialPort.StopBits = StopBits.Two;
-            comport._serialPort.Handshake = Handshake.XOnXOff;
-            comport._serialPort.RtsEnable = true;
-            comport._serialPort.DataReceived += new SerialDataReceivedEventHandler(comport.DataReceivedHandler);
-            comport._serialPort.ReadTimeout = 2000;
-            comport._serialPort.WriteTimeout = 2000;
-            try
-            {
-                comport._serialPort.Open();
-                return true;
-            }
-            catch (IOException ex)
-            {
-                return false;
-            }
+            return openport(portnumber, baudrate, parity, databit, stopbit);
         }
 
-        private static void DataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
-        {
-            comport.read_data = ((SerialPort)sender).ReadExisting();
-        }
 
         public static void sendcommand(string command)
         {
@@ -300,21 +199,7 @@ namespace TSCSDK
 
         public static string sendcommand_getstring(string command)
         {
-            byte[] bytes1 = Encoding.ASCII.GetBytes(command);
-            byte[] bytes2 = Encoding.ASCII.GetBytes(comport.CRLF);
-            byte[] bytes3 = Encoding.Default.GetBytes("OUT \"ENDLINE\"\r\n");
-            comport._serialPort.Write(bytes1, 0, bytes1.Length);
-            comport._serialPort.Write(bytes2, 0, bytes2.Length);
-            comport._serialPort.Write(bytes3, 0, bytes3.Length);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.Read_judge));
-            comport.receivethread.Start();
-            do
-            {
-                Thread.Sleep(100);
-            }
-            while (comport.receivestatus != 1);
-            return comport.byte_to_string;
+            return CreateSerialQuery().QueryFramed(command);
         }
 
         public static int sendcommandNOCRLF(string command)
@@ -493,223 +378,57 @@ namespace TSCSDK
 
         public static void readstream()
         {
-            byte[] numArray = new byte[256];
-            string str = "";
-label_1:
-            try
-            {
-                int count = comport._serialPort.Read(numArray, 0, numArray.Length);
-                if (count > 0)
-                {
-                    comport.receivestring = str + Encoding.ASCII.GetString(numArray, 0, count);
-                    comport.receivestatus = 1;
-                }
-                else
-                    goto label_1;
-            }
-            catch (TimeoutException ex)
-            {
-            }
+            CreateSerialQuery().ReadLegacy(null);
         }
 
         public static void Read_judge()
         {
-            string oldValue = "ENDLINE\r\n";
-            comport.byte_to_string = "";
-            comport.readbuffer = new byte[1024];
-            comport.receivestatus = 0;
-label_1:
-            try
-            {
-                int num = comport._serialPort.Read(comport.readbuffer, 0, comport.readbuffer.Length);
-                if (num > 0)
-                {
-                    for (int index = 0; index <= num; ++index)
-                    {
-                        if (comport.byte_to_string.Contains(oldValue))
-                        {
-                            comport.receivestatus = 1;
-                            comport.byte_to_string = comport.byte_to_string.Replace(oldValue, "");
-                            return;
-                        }
-                        comport.byte_to_string += Convert.ToChar(comport.readbuffer[index]).ToString();
-                    }
-                    goto label_1;
-                }
-                else
-                    goto label_1;
-            }
-            catch (TimeoutException ex)
-            {
-            }
+            CreateSerialQuery().ReadLegacy("ENDLINE\r\n");
         }
 
         public static void Read_judge_fixedstring()
         {
-            byte num1 = 6;
-            byte[] buffer = new byte[256];
-            comport.readbuffer = new byte[1024];
-label_1:
-            try
-            {
-                int num2 = comport._serialPort.Read(buffer, 0, buffer.Length);
-                if (num2 > 0)
-                {
-                    for (int index = 0; index <= num2 - 1; ++index)
-                    {
-                        if ((int)comport.readbuffer[index] == (int)num1)
-                        {
-                            comport.receivestatus = 1;
-                            return;
-                        }
-                        comport.byte_to_string += Convert.ToChar(comport.readbuffer[index]).ToString();
-                    }
-                    goto label_1;
-                }
-                else
-                    goto label_1;
-            }
-            catch (TimeoutException ex)
-            {
-            }
+            CreateSerialQuery().ReadLegacy("\u0006");
         }
 
         public byte printerstatus()
         {
-            byte[] numArray = new byte[256];
-            byte[] buffer = new byte[3]
-            {
-        (byte) 27,
-        (byte) 33,
-        (byte) 63
-            };
-            string str = "";
-            comport._serialPort.Write(buffer, 0, buffer.Length);
-            Thread.Sleep(300);
-label_1:
-            try
-            {
-                int count = comport._serialPort.Read(numArray, 0, numArray.Length);
-                if (count > 0)
-                {
-                    comport.receivestring = str + Encoding.ASCII.GetString(numArray, 0, count);
-                    return numArray[0];
-                }
-                goto label_1;
-            }
-            catch (TimeoutException ex)
-            {
-            }
-            return numArray[0];
+            return serialQuery.QueryStatus();
         }
 
         public string printerfullstatus()
         {
-            byte[] numArray = new byte[256];
-            byte[] buffer = new byte[3]
-            {
-        (byte) 27,
-        (byte) 33,
-        (byte) 83
-            };
-            comport._serialPort.Write(buffer, 0, buffer.Length);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.readstream));
-            comport.receivethread.Start();
-            do
-                ;
-            while (comport.receivestatus != 1);
-            return comport.receivestring;
+            return serialQuery.QueryFullStatus();
         }
 
         public string printercodepage()
         {
-            byte[] numArray = new byte[256];
-            string str = "~!I";
-            Encoding.ASCII.GetBytes(str);
-            comport._serialPort.WriteLine(str);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.readstream));
-            comport.receivethread.Start();
-            do
-                ;
-            while (comport.receivestatus != 1);
-            return comport.receivestring;
+            return serialQuery.QueryLine("~!I");
         }
 
         public string printername()
         {
-            byte[] numArray = new byte[256];
-            string str = "~!T";
-            Encoding.ASCII.GetBytes(str);
-            comport._serialPort.WriteLine(str);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.readstream));
-            comport.receivethread.Start();
-            do
-                ;
-            while (comport.receivestatus != 1);
-            return comport.receivestring;
+            return serialQuery.QueryLine("~!T");
         }
 
         public string printermileage()
         {
-            byte[] numArray = new byte[256];
-            string str = "~!@";
-            Encoding.ASCII.GetBytes(str);
-            comport._serialPort.WriteLine(str);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.readstream));
-            comport.receivethread.Start();
-            do
-                ;
-            while (comport.receivestatus != 1);
-            return comport.receivestring;
+            return serialQuery.QueryLine("~!@");
         }
 
         public string printermemory()
         {
-            byte[] numArray = new byte[256];
-            string str = "~!A";
-            Encoding.ASCII.GetBytes(str);
-            comport._serialPort.WriteLine(str);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.readstream));
-            comport.receivethread.Start();
-            do
-                ;
-            while (comport.receivestatus != 1);
-            return comport.receivestring;
+            return serialQuery.QueryLine("~!A");
         }
 
         public string printerfile()
         {
-            byte[] numArray = new byte[256];
-            string str = "~!F";
-            Encoding.ASCII.GetBytes(str);
-            comport._serialPort.WriteLine(str);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.readstream));
-            comport.receivethread.Start();
-            do
-                ;
-            while (comport.receivestatus != 1);
-            return comport.receivestring;
+            return serialQuery.QueryLine("~!F");
         }
 
         public string printerserial()
         {
-            byte[] numArray = new byte[256];
-            string str = "OUT _SERIAL$\r\n";
-            Encoding.ASCII.GetBytes(str);
-            comport._serialPort.WriteLine(str);
-            Thread.Sleep(300);
-            comport.receivethread = new Thread(new ThreadStart(comport.readstream));
-            comport.receivethread.Start();
-            do
-                ;
-            while (comport.receivestatus != 1);
-            return comport.receivestring;
+            return serialQuery.QueryLine("OUT _SERIAL$\r\n");
         }
 
         public void printerrestart()
@@ -724,6 +443,26 @@ label_1:
             comport._serialPort.Write(buffer, 0, buffer.Length);
         }
 
+        private readonly IWindowsFontGdi fontGdi;
+        private readonly Func<Action<byte[], int, int>> captureFontWriter;
+
+        public comport() : this(new WindowsFontGdi(), CaptureSerialFontWriter)
+        {
+        }
+
+        internal comport(IWindowsFontGdi native, Func<Action<byte[], int, int>> captureWriter)
+        {
+            fontGdi = native;
+            captureFontWriter = captureWriter;
+        }
+
+        private static Action<byte[], int, int> CaptureSerialFontWriter()
+        {
+            // Capture at font-call time, not construction; the public port lifecycle remains shared.
+            var port = _serialPort;
+            return (packet, offset, count) => port.Write(packet, offset, count);
+        }
+
         public void windowsfont(
           int x,
           int y,
@@ -734,125 +473,17 @@ label_1:
           string szFaceName,
           string content)
         {
-            comport.LOGFONT lplf = new comport.LOGFONT();
-            comport.SIZE lpSize = new comport.SIZE();
-            lplf.lfWidth = 0;
-            lplf.lfEscapement = 0;
-            lplf.lfOrientation = 0;
-            lplf.lfCharSet = (byte)1;
-            lplf.lfOutPrecision = (byte)0;
-            lplf.lfClipPrecision = (byte)0;
-            lplf.lfQuality = (byte)1;
-            lplf.lfPitchAndFamily = (byte)26;
-            lplf.lfFaceName = szFaceName;
-            lplf.lfHeight = fontheight;
-            lplf.lfItalic = (byte)0;
-            lplf.lfUnderline = (byte)0;
-            lplf.lfStrikeOut = (byte)0;
-            lplf.lfWeight = fontstyle < 2 ? 400 : 700;
-            lplf.lfEscapement = rotation * 10;
-            IntPtr dc = comport.GetDC(IntPtr.Zero);
-            IntPtr compatibleDc = comport.CreateCompatibleDC(dc);
-            IntPtr bitmap = comport.CreateBitmap(2400, 2400, 1U, 1U, IntPtr.Zero);
-            comport.SelectObject(compatibleDc, bitmap);
-            IntPtr fontIndirect = comport.CreateFontIndirect(lplf);
-            IntPtr hgdiobj = comport.SelectObject(compatibleDc, fontIndirect);
-            comport.GetTextExtentPoint32(compatibleDc, content, content.Length, out lpSize);
-            int num1 = (int)comport.SetTextColor(compatibleDc, ColorTranslator.ToWin32(Color.Black));
-            int num2 = (int)comport.SetBkColor(compatibleDc, ColorTranslator.ToWin32(Color.White));
-            comport.iBitmapWidth = rotation == 0 || rotation == 180 ? (lpSize.cx + 7) / 8 : (lpSize.cy + 7) / 8;
-            comport.iBitmapHeight = rotation == 90 || rotation == 270 ? lpSize.cx : lpSize.cy;
-            var rect = new comport.RECT()
+            SendWindowsFont(new WindowsFontRequest
             {
-                Left = 0,
-                Top = 0,
-                Right = rotation == 0 || rotation == 180 ? lpSize.cx + 16 : lpSize.cy + 16,
-                Bottom = rotation == 90 || rotation == 270 ? lpSize.cx + 16 : lpSize.cy + 16
-            };
-            comport.FillRect(compatibleDc, ref rect, IntPtr.Zero);
-            int num3;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num3 = 0;
-                    break;
-                case 180:
-                    num3 = lpSize.cx;
-                    break;
-                default:
-                    num3 = lpSize.cy;
-                    break;
-            }
-            comport.TextOut_X_start = num3;
-            comport.TextOut_Y_start = rotation == 0 || rotation == 270 ? 0 : comport.iBitmapHeight;
-            comport.TextOut(compatibleDc, comport.TextOut_X_start, comport.TextOut_Y_start, content, content.Length);
-            comport.GetBitmapBits(bitmap, 5760000, comport.buf);
-            if (!comport.DeleteObject(comport.SelectObject(compatibleDc, hgdiobj)))
-            {
-                // int num4 = (int)MessageBox.Show("Select hFont=0", "title");
-            }
-            if (!comport.DeleteDC(compatibleDc))
-            {
-                // int num5 = (int)MessageBox.Show("hdcMem=0", "title");
-            }
-            if (!comport.DeleteObject(bitmap))
-            {
-                // int num6 = (int)MessageBox.Show("hBitmap=0", "title");
-            }
-            int num7;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num7 = x;
-                    break;
-                case 180:
-                    num7 = x - lpSize.cx;
-                    break;
-                default:
-                    num7 = x - lpSize.cy;
-                    break;
-            }
-            comport.iBitmapX = num7;
-            comport.iBitmapY = rotation == 0 || rotation == 270 ? y : y - comport.iBitmapHeight;
-            if (comport.iBitmapY < 0)
-            {
-                comport.iTop -= comport.iBitmapY;
-                comport.iBitmapY = 0;
-            }
-            if (comport.iBitmapX < 0)
-            {
-                comport.imgShiftX -= (comport.iBitmapX - 7) / 8;
-                comport.iBitmapX = 0;
-            }
-            byte[] bytes = Encoding.UTF8.GetBytes("BITMAP " + (object)comport.iBitmapX + "," + (object)comport.iBitmapY + "," + (object)(comport.iBitmapWidth - comport.imgShiftX) + "," + (object)(comport.iBitmapHeight - comport.iTop) + ",1,");
-            comport._serialPort.Write(bytes, 0, bytes.Length);
-            GC.Collect();
-            Encoding.Unicode.GetChars(comport.buf);
-            for (int iTop = comport.iTop; iTop < comport.iBitmapHeight; ++iTop)
-            {
-                int imgShiftX = comport.imgShiftX;
-                while (imgShiftX < comport.iBitmapWidth)
-                {
-                    byte[] numArray1 = new byte[300];
-                    Marshal.SizeOf((object)numArray1[0]);
-                    int length = numArray1.Length;
-                    IntPtr num8 = Marshal.AllocHGlobal(5760000);
-                    Marshal.Copy(comport.buf, iTop * 300, num8, 5760000 - iTop * 300);
-                    byte[] numArray2 = new byte[300];
-                    Marshal.Copy(num8, numArray2, 0, 300);
-                    comport._serialPort.Write(numArray2, 0, comport.iBitmapWidth);
-                    imgShiftX += comport.iBitmapWidth;
-                    Marshal.FreeHGlobal(num8);
-                    GC.Collect();
-                }
-            }
-            comport._serialPort.Write(comport.CRLF_byte, 0, comport.CRLF_byte.Length);
-            Marshal.Release(bitmap);
-            Marshal.Release(compatibleDc);
-            Marshal.Release(dc);
-            GC.Collect();
+                X = x,
+                Y = y,
+                Height = fontheight,
+                Rotation = rotation,
+                Style = fontstyle,
+                FaceName = szFaceName,
+                Content = content,
+                Unicode = false
+            });
         }
 
         public void windowsfontunicode(
@@ -865,232 +496,46 @@ label_1:
           string szFaceName,
           string content)
         {
-            comport.LOGFONT lplf = new comport.LOGFONT();
-            comport.SIZE lpSize = new comport.SIZE();
-            lplf.lfWidth = 0;
-            lplf.lfEscapement = 0;
-            lplf.lfOrientation = 0;
-            lplf.lfCharSet = (byte)1;
-            lplf.lfOutPrecision = (byte)0;
-            lplf.lfClipPrecision = (byte)0;
-            lplf.lfQuality = (byte)1;
-            lplf.lfPitchAndFamily = (byte)26;
-            lplf.lfFaceName = szFaceName;
-            lplf.lfHeight = fontheight;
-            lplf.lfItalic = (byte)0;
-            lplf.lfUnderline = (byte)0;
-            lplf.lfStrikeOut = (byte)0;
-            lplf.lfWeight = fontstyle < 2 ? 400 : 700;
-            lplf.lfEscapement = rotation * 10;
-            IntPtr dc = comport.GetDC(IntPtr.Zero);
-            IntPtr compatibleDc = comport.CreateCompatibleDC(dc);
-            IntPtr bitmap = comport.CreateBitmap(2400, 2400, 1U, 1U, IntPtr.Zero);
-            comport.SelectObject(compatibleDc, bitmap);
-            IntPtr fontIndirect = comport.CreateFontIndirect(lplf);
-            IntPtr hgdiobj = comport.SelectObject(compatibleDc, fontIndirect);
-            comport.GetTextExtentPoint32W(compatibleDc, content, content.Length, out lpSize);
-            int num1 = (int)comport.SetTextColor(compatibleDc, ColorTranslator.ToWin32(Color.Black));
-            int num2 = (int)comport.SetBkColor(compatibleDc, ColorTranslator.ToWin32(Color.White));
-            comport.iBitmapWidth = rotation == 0 || rotation == 180 ? (lpSize.cx + 7) / 8 : (lpSize.cy + 7) / 8;
-            comport.iBitmapHeight = rotation == 90 || rotation == 270 ? lpSize.cx : lpSize.cy;
-            var rect = new comport.RECT()
+            SendWindowsFont(new WindowsFontRequest
             {
-                Left = 0,
-                Top = 0,
-                Right = rotation == 0 || rotation == 180 ? lpSize.cx + 16 : lpSize.cy + 16,
-                Bottom = rotation == 90 || rotation == 270 ? lpSize.cx + 16 : lpSize.cy + 16
-            };
-            comport.FillRect(compatibleDc, ref rect, IntPtr.Zero);
-            int num3;
-            switch (rotation)
+                X = x,
+                Y = y,
+                Height = fontheight,
+                Rotation = rotation,
+                Style = fontstyle,
+                FaceName = szFaceName,
+                Content = content,
+                Unicode = true
+            });
+        }
+
+        private void SendWindowsFont(WindowsFontRequest request)
+        {
+            // fontunderline stays ignored. The renderer includes exactly one trailing CRLF.
+            var write = captureFontWriter();
+            WindowsFontCommand.Send(request, fontGdi, (packet, offset, count) =>
             {
-                case 0:
-                case 90:
-                    num3 = 0;
-                    break;
-                case 180:
-                    num3 = lpSize.cx;
-                    break;
-                default:
-                    num3 = lpSize.cy;
-                    break;
-            }
-            comport.TextOut_X_start = num3;
-            comport.TextOut_Y_start = rotation == 0 || rotation == 270 ? 0 : comport.iBitmapHeight;
-            comport.TextOutW(compatibleDc, comport.TextOut_X_start, comport.TextOut_Y_start, content, content.Length);
-            comport.GetBitmapBits(bitmap, 5760000, comport.buf);
-            if (!comport.DeleteObject(comport.SelectObject(compatibleDc, hgdiobj)))
-            {
-                // int num4 = (int)MessageBox.Show("Select hFont=0", "title");
-            }
-            if (!comport.DeleteDC(compatibleDc))
-            {
-                // int num5 = (int)MessageBox.Show("hdcMem=0", "title");
-            }
-            if (!comport.DeleteObject(bitmap))
-            {
-                // int num6 = (int)MessageBox.Show("hBitmap=0", "title");
-            }
-            int num7;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num7 = x;
-                    break;
-                case 180:
-                    num7 = x - lpSize.cx;
-                    break;
-                default:
-                    num7 = x - lpSize.cy;
-                    break;
-            }
-            comport.iBitmapX = num7;
-            comport.iBitmapY = rotation == 0 || rotation == 270 ? y : y - comport.iBitmapHeight;
-            if (comport.iBitmapY < 0)
-            {
-                comport.iTop -= comport.iBitmapY;
-                comport.iBitmapY = 0;
-            }
-            if (comport.iBitmapX < 0)
-            {
-                comport.imgShiftX -= (comport.iBitmapX - 7) / 8;
-                comport.iBitmapX = 0;
-            }
-            byte[] bytes = Encoding.UTF8.GetBytes("BITMAP " + (object)comport.iBitmapX + "," + (object)comport.iBitmapY + "," + (object)(comport.iBitmapWidth - comport.imgShiftX) + "," + (object)(comport.iBitmapHeight - comport.iTop) + ",1,");
-            comport._serialPort.Write(bytes, 0, bytes.Length);
-            GC.Collect();
-            Encoding.Unicode.GetChars(comport.buf);
-            for (int iTop = comport.iTop; iTop < comport.iBitmapHeight; ++iTop)
-            {
-                int imgShiftX = comport.imgShiftX;
-                while (imgShiftX < comport.iBitmapWidth)
-                {
-                    byte[] numArray1 = new byte[300];
-                    Marshal.SizeOf((object)numArray1[0]);
-                    int length = numArray1.Length;
-                    IntPtr num8 = Marshal.AllocHGlobal(5760000);
-                    Marshal.Copy(comport.buf, iTop * 300, num8, 5760000 - iTop * 300);
-                    byte[] numArray2 = new byte[300];
-                    Marshal.Copy(num8, numArray2, 0, 300);
-                    comport._serialPort.Write(numArray2, 0, comport.iBitmapWidth);
-                    imgShiftX += comport.iBitmapWidth;
-                    Marshal.FreeHGlobal(num8);
-                    GC.Collect();
-                }
-            }
-            comport._serialPort.Write(comport.CRLF_byte, 0, comport.CRLF_byte.Length);
-            Marshal.Release(bitmap);
-            Marshal.Release(compatibleDc);
-            Marshal.Release(dc);
-            GC.Collect();
+                write(packet, offset, count);
+                return count; // SerialPort.Write either completes or throws; never retry it here.
+            });
         }
 
         public void printphoto(int xpoint, int ypoint, string filename)
         {
-            Bitmap bitmap1 = new Bitmap(filename);
-            Bitmap bitmap2 = new Bitmap(bitmap1.Width, bitmap1.Height);
-            for (int x = 0; x < bitmap1.Width; ++x)
-            {
-                for (int y = 0; y < bitmap1.Height; ++y)
-                {
-                    Color pixel = bitmap1.GetPixel(x, y);
-                    int num = (int)((double)pixel.R * 0.3 + (double)pixel.G * 0.59 + (double)pixel.B * 0.11);
-                    bitmap2.SetPixel(x, y, Color.FromArgb((int)pixel.A, num, num, num));
-                }
-            }
-            Bitmap bitmap3 = bitmap2;
-            Bitmap bitmap4 = new Bitmap(bitmap3.Width, bitmap3.Height);
-            comport.sendcommandNOCRLF("BITMAP " + (object)xpoint + "," + (object)ypoint + "," + (object)((bitmap3.Width + 7) / 8) + "," + (object)bitmap3.Height + ", 0,");
-            byte[] command = new byte[(bitmap3.Width + 7) / 8 * bitmap3.Height];
-            for (int index = 0; index < command.Length; ++index)
-                command[index] = byte.MaxValue;
-            for (int y = 0; y < bitmap3.Height; ++y)
-            {
-                for (int x = 0; x < bitmap3.Width; ++x)
-                {
-                    Color pixel = bitmap3.GetPixel(x, y);
-                    int r = (int)pixel.R;
-                    byte g = pixel.G;
-                    byte b = pixel.B;
-                    int num = (int)g;
-                    if ((r + num + (int)b) / 3 < 128)
-                        command[y * ((bitmap3.Width + 7) / 8) + x / 8] ^= (byte)(128 >> x % 8);
-                }
-            }
-            comport.sendcommand(command);
-            comport.sendcommand(comport.CRLF_byte);
+            BitmapCommand.SendFile(xpoint, ypoint, filename,
+                header => comport.sendcommandNOCRLF(header), data => comport.sendcommand(data));
         }
 
         public void sendpicture(int xpoint, int ypoint, string filename)
         {
-            Bitmap bitmap1 = new Bitmap(filename);
-            Bitmap bitmap2 = new Bitmap(bitmap1.Width, bitmap1.Height);
-            for (int x = 0; x < bitmap1.Width; ++x)
-            {
-                for (int y = 0; y < bitmap1.Height; ++y)
-                {
-                    Color pixel = bitmap1.GetPixel(x, y);
-                    int num = (int)((double)pixel.R * 0.3 + (double)pixel.G * 0.59 + (double)pixel.B * 0.11);
-                    bitmap2.SetPixel(x, y, Color.FromArgb((int)pixel.A, num, num, num));
-                }
-            }
-            Bitmap bitmap3 = bitmap2;
-            Bitmap bitmap4 = new Bitmap(bitmap3.Width, bitmap3.Height);
-            comport.sendcommandNOCRLF("BITMAP " + (object)xpoint + "," + (object)ypoint + "," + (object)((bitmap3.Width + 7) / 8) + "," + (object)bitmap3.Height + ", 0,");
-            byte[] command = new byte[(bitmap3.Width + 7) / 8 * bitmap3.Height];
-            for (int index = 0; index < command.Length; ++index)
-                command[index] = byte.MaxValue;
-            for (int y = 0; y < bitmap3.Height; ++y)
-            {
-                for (int x = 0; x < bitmap3.Width; ++x)
-                {
-                    Color pixel = bitmap3.GetPixel(x, y);
-                    int r = (int)pixel.R;
-                    byte g = pixel.G;
-                    byte b = pixel.B;
-                    int num = (int)g;
-                    if ((r + num + (int)b) / 3 < 128)
-                        command[y * ((bitmap3.Width + 7) / 8) + x / 8] ^= (byte)(128 >> x % 8);
-                }
-            }
-            comport.sendcommand(command);
-            comport.sendcommand(comport.CRLF_byte);
+            BitmapCommand.SendFile(xpoint, ypoint, filename,
+                header => comport.sendcommandNOCRLF(header), data => comport.sendcommand(data));
         }
 
         public void sendpicture(int xpoint, int ypoint, Bitmap original_picture)
         {
-            Bitmap bitmap1 = new Bitmap(original_picture.Width, original_picture.Height);
-            for (int x = 0; x < original_picture.Width; ++x)
-            {
-                for (int y = 0; y < original_picture.Height; ++y)
-                {
-                    Color pixel = original_picture.GetPixel(x, y);
-                    int num = (int)((double)pixel.R * 0.3 + (double)pixel.G * 0.59 + (double)pixel.B * 0.11);
-                    bitmap1.SetPixel(x, y, Color.FromArgb((int)pixel.A, num, num, num));
-                }
-            }
-            Bitmap bitmap2 = bitmap1;
-            Bitmap bitmap3 = new Bitmap(bitmap2.Width, bitmap2.Height);
-            comport.sendcommandNOCRLF("BITMAP " + (object)xpoint + "," + (object)ypoint + "," + (object)((bitmap2.Width + 7) / 8) + "," + (object)bitmap2.Height + ", 0,");
-            byte[] command = new byte[(bitmap2.Width + 7) / 8 * bitmap2.Height];
-            for (int index = 0; index < command.Length; ++index)
-                command[index] = byte.MaxValue;
-            for (int y = 0; y < bitmap2.Height; ++y)
-            {
-                for (int x = 0; x < bitmap2.Width; ++x)
-                {
-                    Color pixel = bitmap2.GetPixel(x, y);
-                    int r = (int)pixel.R;
-                    byte g = pixel.G;
-                    byte b = pixel.B;
-                    int num = (int)g;
-                    if ((r + num + (int)b) / 3 < 128)
-                        command[y * ((bitmap2.Width + 7) / 8) + x / 8] ^= (byte)(128 >> x % 8);
-                }
-            }
-            comport.sendcommand(command);
-            comport.sendcommand(comport.CRLF_byte);
+            BitmapCommand.Send(xpoint, ypoint, original_picture,
+                header => comport.sendcommandNOCRLF(header), data => comport.sendcommand(data));
         }
 
         public int sendfile(string path)

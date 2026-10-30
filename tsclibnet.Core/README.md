@@ -6,3 +6,4 @@
 
 - WinForms 종속성 제거 및 TscException 예외 처리로 변경
 - `usb.printsetting()`이 정상 작동하지 않는 버그 수정
+- `printphoto`/`sendpicture`의 임시 이미지 해제: [변경·검증·롤백 기록](../docs/sonarqube-remediation.md)
