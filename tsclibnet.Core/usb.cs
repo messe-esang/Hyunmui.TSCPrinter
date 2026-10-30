@@ -18,6 +18,27 @@ namespace TSCSDK
 {
     public class usb
     {
+        private static readonly UsbRawWriter defaultWriter = new UsbRawWriter(new UsbWriteKernel());
+        private readonly IWindowsFontGdi fontGdi;
+        private readonly UsbRawWriter fontWriter;
+        private readonly Func<int> fontHandle;
+        private readonly UsbDeviceOpener deviceOpener;
+
+        public usb() : this(new WindowsFontGdi(), defaultWriter, () => HidHandle)
+        {
+        }
+
+        internal usb(IWindowsFontGdi fontGdi, UsbRawWriter fontWriter, Func<int> fontHandle)
+            : this(fontGdi, fontWriter, fontHandle, new UsbDeviceOpener()) { }
+
+        internal usb(IWindowsFontGdi fontGdi, UsbRawWriter fontWriter, Func<int> fontHandle, UsbDeviceOpener deviceOpener)
+        {
+            this.deviceOpener = deviceOpener;
+            this.fontGdi = fontGdi;
+            this.fontWriter = fontWriter;
+            this.fontHandle = fontHandle;
+        }
+
         private static Guid guidHID = Guid.Empty;
         private const uint INFINITE = 4294967295;
         private const uint WAIT_ABANDONED = 128;
@@ -63,15 +84,6 @@ namespace TSCSDK
         private static string hexString = "";
         private static ArrayList HIDUSBAddress = new ArrayList();
         private static IntPtr PnPHandle;
-        private static int iTop = 0;
-        private static int iBitmapWidth;
-        private static int iBitmapHeight;
-        private static int iBitmapX;
-        private static int iBitmapY;
-        private static int TextOut_X_start;
-        private static int TextOut_Y_start;
-        private static byte[] buf = new byte[5760000];
-        private static int imgShiftX = 0;
         private const int OUT_DEFAULT_PRECIS = 0;
         private const int CLIP_DEFAULT_PRECIS = 0;
         private const int BUFFER_WIDTH = 2400;
@@ -197,28 +209,13 @@ namespace TSCSDK
         [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr CreateFontIndirect([MarshalAs(UnmanagedType.LPStruct), In] usb.LOGFONT lplf);
 
-        [DllImport("gdi32.dll", SetLastError = true)]
-        private static extern IntPtr CreateCompatibleDC([In] IntPtr hdc);
 
-        [DllImport("gdi32.dll")]
-        private static extern IntPtr CreateBitmap(
-          int nWidth,
-          int nHeight,
-          uint cPlanes,
-          uint cBitsPerPel,
-          IntPtr lpvBits);
 
         [DllImport("gdi32.dll")]
         public static extern IntPtr SelectObject([In] IntPtr hdc, [In] IntPtr hgdiobj);
 
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern IntPtr GetDC(IntPtr hWnd);
 
-        [DllImport("gdi32.dll")]
-        private static extern uint SetTextColor(IntPtr hdc, int crColor);
 
-        [DllImport("gdi32.dll")]
-        private static extern uint SetBkColor(IntPtr hdc, int crColor);
 
         [DllImport("gdi32.dll")]
         private static extern bool Rectangle(
@@ -228,27 +225,9 @@ namespace TSCSDK
           int nRightRect,
           int nBottomRect);
 
-        [DllImport("user32.dll")]
-        private static extern int FillRect(IntPtr hDC, [In] ref usb.RECT lprc, IntPtr hbr);
 
-        [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
-        private static extern bool TextOut(
-          IntPtr hdc,
-          int nXStart,
-          int nYStart,
-          string lpString,
-          int cbString);
 
-        [DllImport("gdi32.dll", CharSet = CharSet.Auto)]
-        private static extern bool TextOutW(
-          IntPtr hdc,
-          int nXStart,
-          int nYStart,
-          string lpWString,
-          int cbString);
 
-        [DllImport("gdi32.dll")]
-        private static extern int GetBitmapBits(IntPtr hbmp, int cbBuffer, [Out] byte[] lpvBits);
 
         [DllImport("gdi32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -257,112 +236,22 @@ namespace TSCSDK
         [DllImport("gdi32.dll")]
         public static extern bool DeleteDC([In] IntPtr hdc);
 
-        [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
-        private static extern bool GetTextExtentPoint32(
-          IntPtr hdc,
-          string lpString,
-          int cbString,
-          out usb.SIZE lpSize);
 
-        [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
-        private static extern bool GetTextExtentPoint32W(
-          IntPtr hdc,
-          string lpWString,
-          int cbString,
-          out usb.SIZE lpSize);
 
         public bool openport()
         {
-            int num1 = 0;
-            usb.HidD_GetHidGuid(ref usb.guidHID);
-            uint requiredSize = 0;
-            usb.PnPHandle = usb.SetupDiGetClassDevs(ref usb.GUID_DEVINTERFACE_USBPRINT, IntPtr.Zero, IntPtr.Zero, usb.ClassDevsFlags.DIGCF_PRESENT | usb.ClassDevsFlags.DIGCF_DEVICEINTERFACE);
-            usb.SP_DEVICE_INTERFACE_DATA deviceInterfaceData = new usb.SP_DEVICE_INTERFACE_DATA();
-            deviceInterfaceData.cbSize = Marshal.SizeOf((object)deviceInterfaceData);
-            usb.SetupDiEnumDeviceInterfaces(usb.PnPHandle, IntPtr.Zero, ref usb.GUID_DEVINTERFACE_USBPRINT, (uint)num1, ref deviceInterfaceData);
-            usb.SetupDiEnumDeviceInterfaces(usb.PnPHandle, IntPtr.Zero, ref usb.GUID_DEVINTERFACE_USBPRINT, (uint)num1, ref deviceInterfaceData);
-            usb.SP_DEVINFO_DATA DeviceInfoData = new usb.SP_DEVINFO_DATA();
-            DeviceInfoData.cbSize = (uint)Marshal.SizeOf((object)DeviceInfoData);
-            usb.SetupDiEnumDeviceInfo(usb.PnPHandle, num1, ref DeviceInfoData);
-            usb.SetupDiGetDeviceInterfaceDetail(usb.PnPHandle, ref deviceInterfaceData, IntPtr.Zero, 0U, ref requiredSize, IntPtr.Zero);
-            Marshal.GetLastWin32Error();
-            IntPtr num2 = Marshal.AllocCoTaskMem((int)requiredSize);
-            switch (IntPtr.Size)
-            {
-                case 4:
-                    Marshal.WriteInt32(num2, 4 + Marshal.SystemDefaultCharSize);
-                    break;
-                case 8:
-                    Marshal.WriteInt32(num2, 8);
-                    break;
-                default:
-                    throw new NotSupportedException("Architecture not supported.");
-            }
-            usb.SP_DEVICE_INTERFACE_DETAIL_DATA structure = new usb.SP_DEVICE_INTERFACE_DETAIL_DATA();
-            structure.cbSize = (uint)Marshal.SizeOf((object)structure);
-            if (!usb.SetupDiGetDeviceInterfaceDetail(usb.PnPHandle, ref deviceInterfaceData, num2, requiredSize, ref requiredSize, IntPtr.Zero))
-                return false;
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_DEVICEDESC);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_CLASS);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_CLASSGUID);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_DRIVER);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_MFG);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_FRIENDLYNAME);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_LOWERFILTERS);
-            string stringAuto = Marshal.PtrToStringAuto(new IntPtr(num2.ToInt64() + 4L));
-            for (int index = 0; index < 8; ++index)
-                usb.VID += stringAuto[index + 8].ToString();
-            for (int index = 0; index < 8; ++index)
-                usb.PID += stringAuto[index + 17].ToString();
-            usb.HidHandle = usb.CreateFile(stringAuto, 3221225472U, 3U, IntPtr.Zero, 3U, 0U, IntPtr.Zero);
-            return usb.HidHandle != -1;
+            int handle;
+            if (!deviceOpener.TryOpen(false, out handle)) return false;
+            HidHandle = handle;
+            return handle != -1;
         }
 
         public bool openport_overlapped()
         {
-            int num1 = 0;
-            usb.HidD_GetHidGuid(ref usb.guidHID);
-            uint requiredSize = 0;
-            usb.PnPHandle = usb.SetupDiGetClassDevs(ref usb.GUID_DEVINTERFACE_USBPRINT, IntPtr.Zero, IntPtr.Zero, usb.ClassDevsFlags.DIGCF_PRESENT | usb.ClassDevsFlags.DIGCF_DEVICEINTERFACE);
-            usb.SP_DEVICE_INTERFACE_DATA deviceInterfaceData = new usb.SP_DEVICE_INTERFACE_DATA();
-            deviceInterfaceData.cbSize = Marshal.SizeOf((object)deviceInterfaceData);
-            usb.SetupDiEnumDeviceInterfaces(usb.PnPHandle, IntPtr.Zero, ref usb.GUID_DEVINTERFACE_USBPRINT, (uint)num1, ref deviceInterfaceData);
-            usb.SetupDiEnumDeviceInterfaces(usb.PnPHandle, IntPtr.Zero, ref usb.GUID_DEVINTERFACE_USBPRINT, (uint)num1, ref deviceInterfaceData);
-            usb.SP_DEVINFO_DATA DeviceInfoData = new usb.SP_DEVINFO_DATA();
-            DeviceInfoData.cbSize = (uint)Marshal.SizeOf((object)DeviceInfoData);
-            usb.SetupDiEnumDeviceInfo(usb.PnPHandle, num1, ref DeviceInfoData);
-            usb.SetupDiGetDeviceInterfaceDetail(usb.PnPHandle, ref deviceInterfaceData, IntPtr.Zero, 0U, ref requiredSize, IntPtr.Zero);
-            Marshal.GetLastWin32Error();
-            IntPtr num2 = Marshal.AllocCoTaskMem((int)requiredSize);
-            switch (IntPtr.Size)
-            {
-                case 4:
-                    Marshal.WriteInt32(num2, 4 + Marshal.SystemDefaultCharSize);
-                    break;
-                case 8:
-                    Marshal.WriteInt32(num2, 8);
-                    break;
-                default:
-                    throw new NotSupportedException("Architecture not supported.");
-            }
-            usb.SP_DEVICE_INTERFACE_DETAIL_DATA structure = new usb.SP_DEVICE_INTERFACE_DETAIL_DATA();
-            structure.cbSize = (uint)Marshal.SizeOf((object)structure);
-            if (!usb.SetupDiGetDeviceInterfaceDetail(usb.PnPHandle, ref deviceInterfaceData, num2, requiredSize, ref requiredSize, IntPtr.Zero))
-                return false;
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_DEVICEDESC);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_CLASS);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_CLASSGUID);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_DRIVER);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_MFG);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_FRIENDLYNAME);
-            usb.GetRegistryProperty(usb.PnPHandle, ref DeviceInfoData, usb.RegPropertyType.SPDRP_LOWERFILTERS);
-            string stringAuto = Marshal.PtrToStringAuto(new IntPtr(num2.ToInt32() + 4));
-            for (int index = 0; index < 8; ++index)
-                usb.VID += stringAuto[index + 8].ToString();
-            for (int index = 0; index < 8; ++index)
-                usb.PID += stringAuto[index + 17].ToString();
-            usb.HidHandle = usb.CreateFile(stringAuto, 3221225472U, 3U, IntPtr.Zero, 3U, 1073741952U, IntPtr.Zero);
-            return usb.HidHandle != -1;
+            int handle;
+            if (!deviceOpener.TryOpen(true, out handle)) return false;
+            HidHandle = handle;
+            return handle != -1;
         }
 
         public int openport_mult(int portnumber)
@@ -1310,84 +1199,18 @@ namespace TSCSDK
 
         public static int WriteToStream(byte[] buffer)
         {
-            uint lpNumberOfBytesTransferred = 0;
-            uint lpNumberOfBytesRead = 0;
-            NativeOverlapped lpOverlapped = new NativeOverlapped();
-            lpOverlapped.EventHandle = usb.CreateEvent(IntPtr.Zero, true, false, (string)null);
-            if (!usb.WriteFile((IntPtr)usb.HidHandle, buffer, (uint)buffer.Length, ref lpNumberOfBytesRead, ref lpOverlapped))
-            {
-                switch (usb.WaitForSingleObject(lpOverlapped.EventHandle, 2000U))
-                {
-                    case 0:
-                        if (usb.GetOverlappedResult((IntPtr)usb.HidHandle, ref lpOverlapped, out lpNumberOfBytesTransferred, false))
-                            break;
-                        break;
-                    case 1:
-                    case uint.MaxValue:
-                        break;
-                    case 258:
-                        throw new TscException("WAIT_TIMEOUT");
-                    default:
-                        usb.CancelIo((IntPtr)usb.HidHandle);
-                        break;
-                }
-            }
-            else if ((long)buffer.Length != (long)lpNumberOfBytesRead)
-                ;
-            usb.CloseHandle(lpOverlapped.EventHandle);
-            return 1;
+            var handle = HidHandle;
+            return WriteStatus((IntPtr)handle, buffer, defaultWriter);
         }
 
         public static int WriteToStream(int portnumber, byte[] buffer)
         {
-            uint lpNumberOfBytesTransferred = 0;
-            uint lpNumberOfBytesRead = 0;
-            NativeOverlapped lpOverlapped = new NativeOverlapped();
-            lpOverlapped.EventHandle = usb.CreateEvent(IntPtr.Zero, true, false, (string)null);
-            if (!usb.WriteFile((IntPtr)portnumber, buffer, (uint)buffer.Length, ref lpNumberOfBytesRead, ref lpOverlapped))
-            {
-                switch (usb.WaitForSingleObject(lpOverlapped.EventHandle, 2000U))
-                {
-                    case 0:
-                        if (usb.GetOverlappedResult((IntPtr)usb.HidHandle, ref lpOverlapped, out lpNumberOfBytesTransferred, false))
-                            break;
-                        break;
-                    case 1:
-                    case uint.MaxValue:
-                        break;
-                    case 258:
-                        throw new TscException("WAIT_TIMEOUT");
-                    default:
-                        usb.CancelIo((IntPtr)usb.HidHandle);
-                        break;
-                }
-            }
-            else if ((long)buffer.Length != (long)lpNumberOfBytesRead)
-                ;
-            usb.CloseHandle(lpOverlapped.EventHandle);
-            return 1;
+            return WriteStatus((IntPtr)portnumber, buffer, defaultWriter);
         }
 
-        private static int WriteToStream(byte[] buffer, int length)
+        internal static int WriteStatus(IntPtr handle, byte[] buffer, UsbRawWriter writer)
         {
-            uint lpNumberOfBytesTransferred = 0;
-            uint lpNumberOfBytesRead = 0;
-            NativeOverlapped lpOverlapped = new NativeOverlapped();
-            lpOverlapped.EventHandle = usb.CreateEvent(IntPtr.Zero, true, false, (string)null);
-            if (!usb.WriteFile((IntPtr)usb.HidHandle, buffer, (uint)length, ref lpNumberOfBytesRead, ref lpOverlapped))
-            {
-                switch (usb.WaitForSingleObject(lpOverlapped.EventHandle, 2000U))
-                {
-                    case 0:
-                        usb.GetOverlappedResult((IntPtr)usb.HidHandle, ref lpOverlapped, out lpNumberOfBytesTransferred, false);
-                        throw new TscException("WAIT_OBJECT_0");
-                    case 258:
-                        throw new TscException("WAIT_TIMEOUT");
-                }
-            }
-            else if ((long)buffer.Length != (long)lpNumberOfBytesRead)
-                ;
-            usb.CloseHandle(lpOverlapped.EventHandle);
+            writer.Write(handle, buffer);
             return 1;
         }
 
@@ -1568,124 +1391,11 @@ label_1:
           string szFaceName,
           string content)
         {
-            usb.LOGFONT lplf = new usb.LOGFONT();
-            usb.SIZE lpSize = new usb.SIZE();
-            lplf.lfWidth = 0;
-            lplf.lfEscapement = 0;
-            lplf.lfOrientation = 0;
-            lplf.lfCharSet = (byte)1;
-            lplf.lfOutPrecision = (byte)0;
-            lplf.lfClipPrecision = (byte)0;
-            lplf.lfQuality = (byte)1;
-            lplf.lfPitchAndFamily = (byte)26;
-            lplf.lfFaceName = szFaceName;
-            lplf.lfHeight = fontheight;
-            lplf.lfItalic = (byte)0;
-            lplf.lfUnderline = (byte)0;
-            lplf.lfStrikeOut = (byte)0;
-            lplf.lfWeight = fontstyle < 2 ? 400 : 700;
-            lplf.lfEscapement = rotation * 10;
-            IntPtr dc = usb.GetDC(IntPtr.Zero);
-            IntPtr compatibleDc = usb.CreateCompatibleDC(dc);
-            IntPtr bitmap = usb.CreateBitmap(2400, 2400, 1U, 1U, IntPtr.Zero);
-            usb.SelectObject(compatibleDc, bitmap);
-            IntPtr fontIndirect = usb.CreateFontIndirect(lplf);
-            IntPtr hgdiobj = usb.SelectObject(compatibleDc, fontIndirect);
-            usb.GetTextExtentPoint32(compatibleDc, content, content.Length, out lpSize);
-            int num1 = (int)usb.SetTextColor(compatibleDc, ColorTranslator.ToWin32(Color.Black));
-            int num2 = (int)usb.SetBkColor(compatibleDc, ColorTranslator.ToWin32(Color.White));
-            usb.iBitmapWidth = rotation == 0 || rotation == 180 ? (lpSize.cx + 7) / 8 : (lpSize.cy + 7) / 8;
-            usb.iBitmapHeight = rotation == 90 || rotation == 270 ? lpSize.cx : lpSize.cy;
-            var rect = new usb.RECT()
+            SendWindowsFont(new WindowsFontRequest
             {
-                Left = 0,
-                Top = 0,
-                Right = rotation == 0 || rotation == 180 ? lpSize.cx + 16 : lpSize.cy + 16,
-                Bottom = rotation == 90 || rotation == 270 ? lpSize.cx + 16 : lpSize.cy + 16
-            };
-            usb.FillRect(compatibleDc, ref rect, IntPtr.Zero);
-            int num3;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num3 = 0;
-                    break;
-                case 180:
-                    num3 = lpSize.cx;
-                    break;
-                default:
-                    num3 = lpSize.cy;
-                    break;
-            }
-            usb.TextOut_X_start = num3;
-            usb.TextOut_Y_start = rotation == 0 || rotation == 270 ? 0 : usb.iBitmapHeight;
-            usb.TextOut(compatibleDc, usb.TextOut_X_start, usb.TextOut_Y_start, content, content.Length);
-            usb.GetBitmapBits(bitmap, 5760000, usb.buf);
-            if (!usb.DeleteObject(usb.SelectObject(compatibleDc, hgdiobj)))
-            {
-                //// int num4 = (int)MessageBox.Show("Select hFont=0", "title");
-            }
-            if (!usb.DeleteDC(compatibleDc))
-            {
-                //// int num5 = (int)MessageBox.Show("hdcMem=0", "title");
-            }
-            if (!usb.DeleteObject(bitmap))
-            {
-                //// int num6 = (int)MessageBox.Show("hBitmap=0", "title");
-            }
-            int num7;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num7 = x;
-                    break;
-                case 180:
-                    num7 = x - lpSize.cx;
-                    break;
-                default:
-                    num7 = x - lpSize.cy;
-                    break;
-            }
-            usb.iBitmapX = num7;
-            usb.iBitmapY = rotation == 0 || rotation == 270 ? y : y - usb.iBitmapHeight;
-            if (usb.iBitmapY < 0)
-            {
-                usb.iTop -= usb.iBitmapY;
-                usb.iBitmapY = 0;
-            }
-            if (usb.iBitmapX < 0)
-            {
-                usb.imgShiftX -= (usb.iBitmapX - 7) / 8;
-                usb.iBitmapX = 0;
-            }
-            usb.WriteToStream(Encoding.UTF8.GetBytes("BITMAP " + (object)usb.iBitmapX + "," + (object)usb.iBitmapY + "," + (object)(usb.iBitmapWidth - usb.imgShiftX) + "," + (object)(usb.iBitmapHeight - usb.iTop) + ",1,"));
-            GC.Collect();
-            Encoding.Unicode.GetChars(usb.buf);
-            for (int iTop = usb.iTop; iTop < usb.iBitmapHeight; ++iTop)
-            {
-                int imgShiftX = usb.imgShiftX;
-                while (imgShiftX < usb.iBitmapWidth)
-                {
-                    byte[] numArray1 = new byte[300];
-                    Marshal.SizeOf((object)numArray1[0]);
-                    int length = numArray1.Length;
-                    IntPtr num8 = Marshal.AllocHGlobal(5760000);
-                    Marshal.Copy(usb.buf, iTop * 300, num8, 5760000 - iTop * 300);
-                    byte[] numArray2 = new byte[300];
-                    Marshal.Copy(num8, numArray2, 0, 300);
-                    usb.WriteToStream(numArray2, usb.iBitmapWidth);
-                    imgShiftX += usb.iBitmapWidth;
-                    Marshal.FreeHGlobal(num8);
-                    GC.Collect();
-                }
-            }
-            usb.WriteToStream(usb.CRLF_byte);
-            Marshal.Release(bitmap);
-            Marshal.Release(compatibleDc);
-            Marshal.Release(dc);
-            GC.Collect();
+                X = x, Y = y, Height = fontheight, Rotation = rotation,
+                Style = fontstyle, FaceName = szFaceName, Content = content, Unicode = false
+            });
         }
 
         public void windowsfontunicode(
@@ -1698,124 +1408,18 @@ label_1:
           string szFaceName,
           string content)
         {
-            usb.LOGFONT lplf = new usb.LOGFONT();
-            usb.SIZE lpSize = new usb.SIZE();
-            lplf.lfWidth = 0;
-            lplf.lfEscapement = 0;
-            lplf.lfOrientation = 0;
-            lplf.lfCharSet = (byte)1;
-            lplf.lfOutPrecision = (byte)0;
-            lplf.lfClipPrecision = (byte)0;
-            lplf.lfQuality = (byte)1;
-            lplf.lfPitchAndFamily = (byte)26;
-            lplf.lfFaceName = szFaceName;
-            lplf.lfHeight = fontheight;
-            lplf.lfItalic = (byte)0;
-            lplf.lfUnderline = (byte)0;
-            lplf.lfStrikeOut = (byte)0;
-            lplf.lfWeight = fontstyle < 2 ? 400 : 700;
-            lplf.lfEscapement = rotation * 10;
-            IntPtr dc = usb.GetDC(IntPtr.Zero);
-            IntPtr compatibleDc = usb.CreateCompatibleDC(dc);
-            IntPtr bitmap = usb.CreateBitmap(2400, 2400, 1U, 1U, IntPtr.Zero);
-            usb.SelectObject(compatibleDc, bitmap);
-            IntPtr fontIndirect = usb.CreateFontIndirect(lplf);
-            IntPtr hgdiobj = usb.SelectObject(compatibleDc, fontIndirect);
-            usb.GetTextExtentPoint32W(compatibleDc, content, content.Length, out lpSize);
-            int num1 = (int)usb.SetTextColor(compatibleDc, ColorTranslator.ToWin32(Color.Black));
-            int num2 = (int)usb.SetBkColor(compatibleDc, ColorTranslator.ToWin32(Color.White));
-            usb.iBitmapWidth = rotation == 0 || rotation == 180 ? (lpSize.cx + 7) / 8 : (lpSize.cy + 7) / 8;
-            usb.iBitmapHeight = rotation == 90 || rotation == 270 ? lpSize.cx : lpSize.cy;
-            var rect = new usb.RECT()
+            SendWindowsFont(new WindowsFontRequest
             {
-                Left = 0,
-                Top = 0,
-                Right = rotation == 0 || rotation == 180 ? lpSize.cx + 16 : lpSize.cy + 16,
-                Bottom = rotation == 90 || rotation == 270 ? lpSize.cx + 16 : lpSize.cy + 16
-            };
-            usb.FillRect(compatibleDc, ref rect, IntPtr.Zero);
-            int num3;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num3 = 0;
-                    break;
-                case 180:
-                    num3 = lpSize.cx;
-                    break;
-                default:
-                    num3 = lpSize.cy;
-                    break;
-            }
-            usb.TextOut_X_start = num3;
-            usb.TextOut_Y_start = rotation == 0 || rotation == 270 ? 0 : usb.iBitmapHeight;
-            usb.TextOutW(compatibleDc, usb.TextOut_X_start, usb.TextOut_Y_start, content, content.Length);
-            usb.GetBitmapBits(bitmap, 5760000, usb.buf);
-            if (!usb.DeleteObject(usb.SelectObject(compatibleDc, hgdiobj)))
-            {
-                //// int num4 = (int)MessageBox.Show("Select hFont=0", "title");
-            }
-            if (!usb.DeleteDC(compatibleDc))
-            {
-                //// int num5 = (int)MessageBox.Show("hdcMem=0", "title");
-            }
-            if (!usb.DeleteObject(bitmap))
-            {
-                //// int num6 = (int)MessageBox.Show("hBitmap=0", "title");
-            }
-            int num7;
-            switch (rotation)
-            {
-                case 0:
-                case 90:
-                    num7 = x;
-                    break;
-                case 180:
-                    num7 = x - lpSize.cx;
-                    break;
-                default:
-                    num7 = x - lpSize.cy;
-                    break;
-            }
-            usb.iBitmapX = num7;
-            usb.iBitmapY = rotation == 0 || rotation == 270 ? y : y - usb.iBitmapHeight;
-            if (usb.iBitmapY < 0)
-            {
-                usb.iTop -= usb.iBitmapY;
-                usb.iBitmapY = 0;
-            }
-            if (usb.iBitmapX < 0)
-            {
-                usb.imgShiftX -= (usb.iBitmapX - 7) / 8;
-                usb.iBitmapX = 0;
-            }
-            usb.WriteToStream(Encoding.UTF8.GetBytes("BITMAP " + (object)usb.iBitmapX + "," + (object)usb.iBitmapY + "," + (object)(usb.iBitmapWidth - usb.imgShiftX) + "," + (object)(usb.iBitmapHeight - usb.iTop) + ",1,"));
-            GC.Collect();
-            Encoding.Unicode.GetChars(usb.buf);
-            for (int iTop = usb.iTop; iTop < usb.iBitmapHeight; ++iTop)
-            {
-                int imgShiftX = usb.imgShiftX;
-                while (imgShiftX < usb.iBitmapWidth)
-                {
-                    byte[] numArray1 = new byte[300];
-                    Marshal.SizeOf((object)numArray1[0]);
-                    int length = numArray1.Length;
-                    IntPtr num8 = Marshal.AllocHGlobal(5760000);
-                    Marshal.Copy(usb.buf, iTop * 300, num8, 5760000 - iTop * 300);
-                    byte[] numArray2 = new byte[300];
-                    Marshal.Copy(num8, numArray2, 0, 300);
-                    usb.WriteToStream(numArray2, usb.iBitmapWidth);
-                    imgShiftX += usb.iBitmapWidth;
-                    Marshal.FreeHGlobal(num8);
-                    GC.Collect();
-                }
-            }
-            usb.WriteToStream(usb.CRLF_byte);
-            Marshal.Release(bitmap);
-            Marshal.Release(compatibleDc);
-            Marshal.Release(dc);
-            GC.Collect();
+                X = x, Y = y, Height = fontheight, Rotation = rotation,
+                Style = fontstyle, FaceName = szFaceName, Content = content, Unicode = true
+            });
+        }
+
+        private void SendWindowsFont(WindowsFontRequest request)
+        {
+            var handle = (IntPtr)fontHandle();
+            WindowsFontCommand.Send(request, fontGdi,
+                (packet, offset, count) => fontWriter.Write(handle, packet, offset, count));
         }
 
         public void printphoto(int xpoint, int ypoint, string filename)
